@@ -41,4 +41,4 @@ for k in range(no_bags):
 
 sample = pd.read_csv('input/sample_submission.csv')
 sample.QuoteConversion_Flag = pred_average
-sample.to_csv('output/xgb_homesite_5bag_11112015.csv', index=False)
+sample.to_csv('output/xgb_homesite_3bag_11112015.csv', index=False)

@@ -31,6 +31,9 @@ bigD <- rbind(train, test)
 rm(list = c('train', 'test'))
 
 ################################ Data Manipulations ##############################################
+# Lets solve the Field10 issue: 1,165 => 1165.
+bigD[, Field10 := as.numeric(gsub(",", "", Field10))]
+
 # First lets work with the dates and remove "Original_Quote_Date" field.
 bigD[, Date := parse_date_time(Original_Quote_Date, "%Y%m%d")]
 bigD[, Original_Quote_Date := NULL]
@@ -62,7 +65,7 @@ bigD[, GeoNeg1s := rowSums(.SD == -1), .SDcols = grep("GeographicField", names(b
 # Finally Total across all.
 bigD[,
      TotalNeg1s := rowSums(.SD),
-     .SDcols = c("Coverage_neg1s", "Sales_neg1s", "Property_neg1s", "Geo_neg1s")]
+     .SDcols = c("CoverageNeg1s", "SalesNeg1s", "PropertyNeg1s", "GeoNeg1s")]
 
 
 # Catch factor columns
