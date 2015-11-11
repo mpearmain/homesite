@@ -1,0 +1,105 @@
+# Data Creation Script.
+# Aim is to produce 3 files:
+# Train
+# Validation (for blending later) -> also for basic CV (LB feedback looks reasonable, i.e stable data)
+# Test
+#
+# These output can then be used in all subsequent models, and the prediction can ben ensembled from
+# the validation using ridge regression (say).
+
+library(data.table)
+library(caret)
+library(stringr)
+library(lubridate)
+
+set.seed(260681)
+
+# Working Dir should be top level with folders ./R, ./input, ./output
+train <- fread('input/train.csv')
+test <- fread('input/test.csv')
+
+# Lets first align the datasets for equal vars to work with.
+y <- train[, QuoteConversion_Flag]
+train[, c('QuoteConversion_Flag') := NULL]
+train[, dset := 0]
+test[, dset := 1]
+
+#Quick check to align data dimensions.
+stopifnot(dim(test)[2] ==dim(train)[2])
+# Join the datasets for simple manipulations.
+bigD <- rbind(train, test)
+rm(list = c('train', 'test'))
+
+################################ Data Manipulations ##############################################
+# First lets work with the dates and remove "Original_Quote_Date" field.
+bigD[, Date := parse_date_time(Original_Quote_Date, "%Y%m%d")]
+bigD[, Original_Quote_Date := NULL]
+
+# Lets get the year, month, day of month, weekday,
+bigD[, year := as.factor(year(Date))]
+bigD[, month := as.factor(month(Date))]
+bigD[, monthday := as.factor(mday(Date))]
+bigD[, weekday := as.factor(wday(Date))]
+
+# Fake duration date - How long since the start of the comp (Mon 9 Nov 2015)
+# Taking logs as magnitude is an order difference 175 min 1042 max
+# Checking distributions between train and test proves equal distributions. --> Good to know for CV.
+bigD[, daysDurOrigQuote := as.integer(parse_date_time("2015-11-09", "%Y%m%d") - Date)]
+bigD[, logDaysDurOrigQuote := log(as.integer(parse_date_time("2015-11-09", "%Y%m%d") - Date))]
+bigD[, Date := NULL]
+
+# Puzzled at what to do with Field10
+# unique(bigD$Field10) - "965"   "548"   "1,165" "1,487" "935"   "564"   "1,113" "1,480"
+
+# Resolve the NA issue with PropertyField29
+bigD[is.na(PropertyField29), PropertyField29 := -1]
+
+# Count -1's across the data set
+bigD[, CoverageNeg1s := rowSums(.SD == -1), .SDcols = grep("CoverageField", names(bigD))]
+bigD[, SalesNeg1s := rowSums(.SD == -1), .SDcols = grep("SalesField", names(bigD))]
+bigD[, PropertyNeg1s := rowSums(.SD == -1), .SDcols = grep("PropertyField", names(bigD))]
+bigD[, GeoNeg1s := rowSums(.SD == -1), .SDcols = grep("GeographicField", names(bigD))]
+# Finally Total across all.
+bigD[,
+     TotalNeg1s := rowSums(.SD),
+     .SDcols = c("Coverage_neg1s", "Sales_neg1s", "Property_neg1s", "Geo_neg1s")]
+
+
+# Catch factor columns
+fact_cols <- which(lapply(bigD, class) == "character")
+# Map all categoricals into numeric.
+cat("Assuming text variables are categorical & replacing them with numeric ids\n")
+for (f in colnames(bigD)) {
+  if (class(bigD[[f]])=="character") {
+    print(f)
+    levels <- unique(bigD[[f]])
+    bigD[[f]] <- as.integer(factor(bigD[[f]], levels=levels))
+  }
+}
+
+
+############################## Split files & Export ##########################################
+xtrain <- bigD[dset == 0, ]
+xtest <- bigD[dset == 1, ]
+rm(bigD)
+
+xtrain[, dset := NULL]
+xtest[, dset := NULL]
+
+xtrain[, QuoteConversion_Flag := y]
+
+# Now split the train in train and valid
+val_size <- 0.1 * NROW(xtrain)
+subrange <- sample(nrow(xtrain), size = val_size)
+# column 4 = train/valid split (0 = train, 1 = valid)
+tra <- xtrain[-subrange,]
+valid <- xtrain[subrange,]
+
+write.csv(xtrain, 'input/xtrain_full.csv', row.names = F)
+write.csv(tra, 'input/xtrain.csv', row.names = F)
+write.csv(valid, 'input/xvalid.csv', row.names = F)
+write.csv(xtest, 'input/xtest.csv', row.names = F)
+
+
+
+
