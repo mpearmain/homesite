@@ -80,6 +80,9 @@ for (f in colnames(bigD)) {
   }
 }
 
+# Next big step is to make binary values of the factor cols, and response rates 
+# for the factor cols.
+
 
 ############################## Split files & Export ##########################################
 xtrain <- bigD[dset == 0, ]
@@ -94,7 +97,6 @@ xtrain[, QuoteConversion_Flag := y]
 # Now split the train in train and valid
 val_size <- 0.1 * NROW(xtrain)
 subrange <- sample(nrow(xtrain), size = val_size)
-# column 4 = train/valid split (0 = train, 1 = valid)
 tra <- xtrain[-subrange,]
 valid <- xtrain[subrange,]
 
