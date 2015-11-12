@@ -11,9 +11,6 @@ from bayesian_optimization import BayesianOptimization
 def xgboostcv(max_depth,
               learning_rate,
               n_estimators,
-              gamma,
-              min_child_weight,
-              max_delta_step,
               subsample,
               colsample_bytree,
               silent=True,
@@ -25,18 +22,18 @@ def xgboostcv(max_depth,
                         n_estimators=int(n_estimators),
                         silent=silent,
                         nthread=nthread,
-                        gamma=gamma,
-                        min_child_weight=min_child_weight,
-                        max_delta_step=max_delta_step,
                         subsample=subsample,
                         colsample_bytree=colsample_bytree,
                         seed=seed,
                         objective="binary:logistic")
 
     xgb_model = clf.fit(x_train, y_train, eval_metric="auc", eval_set=[(x_valid, y_valid)], early_stopping_rounds=25)
-    y_pred = xgb_model.predict_proba(x_valid)[:,1]
 
-    return auc(y_valid, y_pred)
+    print(xgb_model.best_iteration)
+    print(xgb_model.best_score)
+    # Because our objective function is correct we can make use of the early stopping much easier an just set it very
+    # high
+    return xgb_model.best_score
 
 if __name__ == "__main__":
     print('Loading Train data set')
@@ -57,17 +54,14 @@ if __name__ == "__main__":
     test = test.fillna(-1)
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (int(40), int(60)),
+                                     {'max_depth': (int(5), int(40)),
                                       'learning_rate': (0.05, 0.01),
                                       'n_estimators': (int(5000), int(5000)),
-                                      'gamma': (0.2, 0.),
-                                      'min_child_weight': (int(1), int(12)),
-                                      'max_delta_step': (0., 0.1),
                                       'subsample': (0.65, 0.9),
                                       'colsample_bytree': (0.5, 0.9)
                                      })
 
-    xgboostBO.maximize(init_points=7, restarts=100, n_iter=100)
+    xgboostBO.maximize(init_points=7, restarts=100, n_iter=50)
     print('-' * 53)
 
     print('Final Results')
