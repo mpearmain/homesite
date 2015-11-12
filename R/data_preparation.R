@@ -51,9 +51,6 @@ bigD[, daysDurOrigQuote := as.integer(parse_date_time("2015-11-09", "%Y%m%d") - 
 bigD[, logDaysDurOrigQuote := log(as.integer(parse_date_time("2015-11-09", "%Y%m%d") - Date))]
 bigD[, Date := NULL]
 
-# Puzzled at what to do with Field10
-# unique(bigD$Field10) - "965"   "548"   "1,165" "1,487" "935"   "564"   "1,113" "1,480"
-
 # Resolve the NA issue with PropertyField29
 bigD[is.na(PropertyField29), PropertyField29 := -1]
 
@@ -80,7 +77,7 @@ for (f in colnames(bigD)) {
   }
 }
 
-# Next big step is to make binary values of the factor cols, and response rates 
+# Next big step is to make binary values of the factor cols, and response rates
 # for the factor cols.
 
 

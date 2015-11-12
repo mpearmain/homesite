@@ -13,7 +13,7 @@ def xgboostcv(max_depth,
               n_estimators,
               subsample,
               colsample_bytree,
-              silent=False,
+              silent=True,
               nthread=-1,
               seed=1234):
 
@@ -29,8 +29,7 @@ def xgboostcv(max_depth,
 
     xgb_model = clf.fit(x_train, y_train, eval_metric="auc", eval_set=[(x_valid, y_valid)], early_stopping_rounds=25)
 
-    print(xgb_model.best_iteration)
-    print(xgb_model.best_score)
+    print('xgb best round = ', xgb_model.best_iteration)
     # Because our objective function is correct we can make use of the early stopping much easier an just set it very
     # high
     return xgb_model.best_score
