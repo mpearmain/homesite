@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .idea
+.pyc
 homesite.Rproj
 output
 input
