@@ -10,18 +10,12 @@ __author__ = 'mpearmain'
 def generate_feature_labels(booster, mod_no):
     '''
         After training an xgboost model (bst) expected input to function would be 'bst._Booster'
-    :param booster : Booster, XGBModel or dict
-                     Booster or XGBModel instance, or dict taken by Booster.get_fscore()
+    :param booster : XGBModel._Booster or instance,
     :param mod_no: The mod number of lists to create a return.
     :return: A list of lists, with length mod(n)
     '''
 
-    if isinstance(booster, Booster):
-        importance = booster.get_fscore()
-    elif isinstance(booster, dict):
-        importance = booster
-    else:
-        raise ValueError('tree must be Booster or dict instance')
+    importance = booster.get_fscore()
 
     if len(importance) == 0:
         raise ValueError('Booster.get_fscore() results in empty')

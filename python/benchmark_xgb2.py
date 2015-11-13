@@ -4,7 +4,7 @@ __author__ = 'mpearmain'
 
 import pandas as pd
 import xgboost as xgb
-
+from python.importance_splits import generate_feature_labels
 
 print('Loading Train data set')
 x_train = pd.read_csv('input/xtrain_full.csv')
@@ -41,6 +41,5 @@ for k in range(no_bags):
 sample.QuoteConversion_Flag = pred_average
 sample.to_csv('output/xgb_homesite_bench2_10bag_13112015.csv', index=False)
 
-print('Plotting Feature Importance')
-importance = clf._Booster.get_fscore()
-xgb.plot_importance(clf._Booster)
+
+importance = generate_feature_labels(clf._Booster, 3)
