@@ -16,10 +16,6 @@ def generate_feature_labels(booster, mod_no):
     '''
 
     importance = booster.get_fscore()
-
-    if len(importance) == 0:
-        raise ValueError('Booster.get_fscore() results in empty')
-
     tuples = [(k, importance[k]) for k in importance]
     # Sort the features
     tuples = sorted(tuples, key=lambda x: x[1])
