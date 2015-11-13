@@ -77,6 +77,9 @@ for (f in colnames(bigD)) {
   }
 }
 
+
+
+
 # Next big step is to make binary values of the factor cols, and response rates
 # for the factor cols.
 
