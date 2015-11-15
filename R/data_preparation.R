@@ -92,6 +92,7 @@ rm(bigD)
 xtrain[, dset := NULL]
 xtest[, dset := NULL]
 
+# Reattach the conversion flag.
 xtrain[, QuoteConversion_Flag := y]
 
 # Now split the train in train and valid

@@ -22,6 +22,7 @@ test = test.fillna(-1)
 pred_average = True
 no_bags = 10
 for k in range(no_bags):
+    print 'Building bag:', k
     clf = xgb.XGBClassifier(n_estimators=900,
                             nthread=-1,
                             max_depth=8,

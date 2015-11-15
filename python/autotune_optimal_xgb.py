@@ -20,16 +20,16 @@ x_train = x_train.fillna(-1)
 test = test.fillna(-1)
 
 pred_average = True
-no_bags = 10
+no_bags = 3
 for k in range(no_bags):
-    print('Building bag:', no_bags)
-    clf = xgb.XGBClassifier(n_estimators=338,
+    print 'Building bag:', k
+    clf = xgb.XGBClassifier(n_estimators=1700,
                             nthread=-1,
-                            max_depth=9,
-                            learning_rate=0.045827517804649449,
+                            max_depth=8,
+                            learning_rate=0.03,
                             silent=True,
-                            subsample=0.795364790,
-                            colsample_bytree=0.57238046827515454,
+                            subsample=0.8,
+                            colsample_bytree=0.85,
                             seed=k*100+22)
     xgb_model = clf.fit(x_train, y_train, eval_metric="auc")
     preds = clf.predict_proba(test)[:,1]
@@ -40,4 +40,4 @@ for k in range(no_bags):
 
 
 sample.QuoteConversion_Flag = pred_average
-sample.to_csv('output/xgb_homesite_10bag_autotune_13112015.csv', index=False)
+sample.to_csv('output/xgb_homesite_3bag_15112015.csv', index=False)

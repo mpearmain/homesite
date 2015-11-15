@@ -6,6 +6,7 @@ import pandas as pd
 import xgboost as xgb
 from python.importance_splits import generate_feature_labels
 from sklearn.metrics import roc_auc_score as auc
+from scipy.stats import rankdata
 
 print('Loading Full Train data set')
 x_train_full = pd.read_csv('input/xtrain_full.csv')
@@ -82,11 +83,14 @@ for k in range(feature_sets):
     if type(importance_pred_average) == bool:
         importance_pred_average = preds.copy()/feature_sets
         validation_pred_average = pred_valid.copy()/feature_sets
+        validation_rank_pred_average = rankdata(pred_valid.copy())/feature_sets
     else:
         importance_pred_average += preds/feature_sets
         validation_pred_average += pred_valid/feature_sets
+        validation_rank_pred_average += rankdata(pred_valid)/feature_sets
 
 print 'AUC combined features = ', auc(y_valid, validation_pred_average)
+print 'AUC Rank combined features = ', auc(y_valid, validation_pred_average)
 
 
 sample.QuoteConversion_Flag = importance_pred_average
