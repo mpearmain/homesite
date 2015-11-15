@@ -90,7 +90,7 @@ for k in range(feature_sets):
         validation_rank_pred_average += rankdata(pred_valid)/feature_sets
 
 print 'AUC combined features = ', auc(y_valid, validation_pred_average)
-print 'AUC Rank combined features = ', auc(y_valid, validation_pred_average)
+print 'AUC Rank combined features = ', auc(y_valid, validation_rank_pred_average)
 
 
 sample.QuoteConversion_Flag = importance_pred_average
