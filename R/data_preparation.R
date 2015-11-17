@@ -55,8 +55,8 @@ bigD[, Date := NULL]
 # http://www.rochester.edu/College/PSC/signorino/research/Carter_Signorino_2010_PA.pdf
 bigD[, daysDurOrigQuote2 := (daysDurOrigQuote)^2 - daysDurOrigQuote]
 bigD[, daysDurOrigQuote3 := (daysDurOrigQuote)^3 - daysDurOrigQuote]
-bigD[, logdaysDurOrigQuote2 := daysDurOrigQuote2]
-bigD[, logdaysDurOrigQuote3 := daysDurOrigQuote3]
+bigD[, logdaysDurOrigQuote2 := log(daysDurOrigQuote2)]
+bigD[, logdaysDurOrigQuote3 := log(daysDurOrigQuote3)]
 
 
 # Resolve the NA issue with PropertyField29
