@@ -43,6 +43,8 @@ bigD[, year := as.factor(year(Date))]
 bigD[, month := as.factor(month(Date))]
 bigD[, monthday := as.factor(mday(Date))]
 bigD[, weekday := as.factor(wday(Date))]
+# Adding year day - people rebuy the same year?
+bigD[, yearday := as.factor(yday(Date))]
 
 # Fake duration date - How long since the start of the comp (Mon 9 Nov 2015)
 # Taking logs as magnitude is an order difference 175 min 1042 max
@@ -53,24 +55,23 @@ bigD[, Date := NULL]
 
 # Lets model temporal effects in time
 # http://www.rochester.edu/College/PSC/signorino/research/Carter_Signorino_2010_PA.pdf
-bigD[, daysDurOrigQuote2 := (daysDurOrigQuote)^2 - daysDurOrigQuote]
-bigD[, daysDurOrigQuote3 := (daysDurOrigQuote)^3 - daysDurOrigQuote]
-bigD[, logdaysDurOrigQuote2 := log(daysDurOrigQuote2)]
-bigD[, logdaysDurOrigQuote3 := log(daysDurOrigQuote3)]
+bigD[, logdaysDurOrigQuote2 := log((daysDurOrigQuote)^2 - daysDurOrigQuote)]
+bigD[, logdaysDurOrigQuote3 := log((daysDurOrigQuote)^3 - daysDurOrigQuote)]
 
-
-# Resolve the NA issue with PropertyField29
-bigD[is.na(PropertyField29), PropertyField29 := -1]
+bigD[is.na(bigD)] <- -1
 
 # Count -1's across the data set
 bigD[, CoverageNeg1s := rowSums(.SD == -1), .SDcols = grep("CoverageField", names(bigD))]
 bigD[, SalesNeg1s := rowSums(.SD == -1), .SDcols = grep("SalesField", names(bigD))]
 bigD[, PropertyNeg1s := rowSums(.SD == -1), .SDcols = grep("PropertyField", names(bigD))]
 bigD[, GeoNeg1s := rowSums(.SD == -1), .SDcols = grep("GeographicField", names(bigD))]
+bigD[, PersonalNeg1s := rowSums(.SD == -1), .SDcols = grep("PersonalField", names(bigD))]
 # Finally Total across all.
 bigD[,
      TotalNeg1s := rowSums(.SD),
-     .SDcols = c("CoverageNeg1s", "SalesNeg1s", "PropertyNeg1s", "GeoNeg1s")]
+     .SDcols = c("CoverageNeg1s", "SalesNeg1s", "PropertyNeg1s", "GeoNeg1s", "PersonalNeg1s")]
+
+# plotting Sales field 
 
 
 # Catch factor columns
