@@ -40,4 +40,4 @@ for k in range(no_bags):
 
 
 sample.QuoteConversion_Flag = pred_average
-sample.to_csv('output/xgb_homesite_bag_11112015.csv', index=False)
+sample.to_csv('output/xgb_homesite_10bag_17112015.csv', index=False)

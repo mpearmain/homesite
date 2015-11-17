@@ -51,6 +51,14 @@ bigD[, daysDurOrigQuote := as.integer(parse_date_time("2015-11-09", "%Y%m%d") - 
 bigD[, logDaysDurOrigQuote := log(as.integer(parse_date_time("2015-11-09", "%Y%m%d") - Date))]
 bigD[, Date := NULL]
 
+# Lets model temporal effects in time
+# http://www.rochester.edu/College/PSC/signorino/research/Carter_Signorino_2010_PA.pdf
+bigD[, daysDurOrigQuote2 := (daysDurOrigQuote)^2 - daysDurOrigQuote]
+bigD[, daysDurOrigQuote3 := (daysDurOrigQuote)^3 - daysDurOrigQuote]
+bigD[, logdaysDurOrigQuote2 := daysDurOrigQuote2]
+bigD[, logdaysDurOrigQuote3 := daysDurOrigQuote3]
+
+
 # Resolve the NA issue with PropertyField29
 bigD[is.na(PropertyField29), PropertyField29 := -1]
 
@@ -77,9 +85,6 @@ for (f in colnames(bigD)) {
   }
 }
 
-
-
-
 # Next big step is to make binary values of the factor cols, and response rates
 # for the factor cols.
 
@@ -92,7 +97,6 @@ rm(bigD)
 xtrain[, dset := NULL]
 xtest[, dset := NULL]
 
-# Reattach the conversion flag.
 xtrain[, QuoteConversion_Flag := y]
 
 # Now split the train in train and valid
