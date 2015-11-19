@@ -15,7 +15,7 @@ msg <- function(mmm,...)
 ## create folds ####
 # load data
 
-xtrain <- read_csv(file = "./input/train.csv")
+xtrain <- read_csv(file = "../input/train.csv")
 id_train <- xtrain$QuoteNumber; xtrain$QuoteNumber <- NULL
 y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
 
