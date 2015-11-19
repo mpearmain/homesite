@@ -157,6 +157,21 @@ xtest <- read_csv("./input/test.csv")
 # process
 xtrain[is.na(xtrain)]   <- 0; xtest[is.na(xtest)]   <- 0
 
+# add combinations of character columns
+which_char <- colnames(xtrain)[which(sapply(xtrain, class) == "character")]
+xcomb <- combn(length(which_char),2)
+for (ff in 1:ncol(xcomb))
+{
+  i1 <- xcomb[1,ff]; i2 <- xcomb[2,ff]
+  xcol1 <- which_char[i1]; xcol2 <- which_char[i2]
+  xcol <- paste(xtrain[,xcol1], xtrain[,xcol2], sep = "")
+  xname <- paste(xcol1, xcol2, sep = "")
+  xtrain[,xname] <- xcol
+  xcol <- paste(xtest[,xcol1], xtest[,xcol2], sep = "")
+  xtest[,xname] <- xcol
+  msg(xname)
+  
+}
 # convert categorical ones to numeric
 for (f in colnames(xtrain)) {
   if (class(xtrain[[f]])=="character") {
@@ -177,5 +192,11 @@ xtest$month <- lubridate::month(xtest$Original_Quote_Date)
 xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
 
 # store the files
-write_csv(xtrain, path = "./input/xtrain_kb1.csv")
-write_csv(xtest, path = "./input/xtest_kb1.csv")
+write_csv(xtrain, path = "./input/xtrain_kb2.csv")
+write_csv(xtest, path = "./input/xtest_kb2.csv")
+
+## KB set v3 ####
+# same as v1, but factors replaced by response rates
+
+## KB set v4 ####
+# same as v2, but factors replaced by response rates
