@@ -16,6 +16,13 @@ library(lubridate)
 
 set.seed(260681)
 
+## functions ####
+
+msg <- function(mmm,...)
+{
+  cat(sprintf(paste0("[%s] ",mmm),Sys.time(),...)); cat("\n")
+}
+
 ## MP set v1 ####
 # Working Dir should be top level with folders ./R, ./input, ./output
 train <- fread('input/train.csv')
@@ -108,7 +115,67 @@ xtrain[, QuoteConversion_Flag := y]
 write.csv(xtrain, 'input/xtrain_mp1.csv', row.names = F)
 write.csv(xtest, 'input/xtest_mp1.csv', row.names = F)
 
-## KB set v0 ####
+## KB set v1 ####
+# map everything to integers
+# read
+xtrain <- read_csv("./input/train.csv")
+xtest <- read_csv("./input/test.csv")
 
+# process
+xtrain[is.na(xtrain)]   <- 0; xtest[is.na(xtest)]   <- 0
 
+# convert categorical ones to numeric
+for (f in colnames(xtrain)) {
+  if (class(xtrain[[f]])=="character") {
+    levels <- unique(c(xtrain[[f]], xtest[[f]]))
+    xtrain[[f]] <- as.integer(factor(xtrain[[f]], levels=levels))
+    xtest[[f]]  <- as.integer(factor(xtest[[f]],  levels=levels))
+  }
+  msg(f)
+}
 
+# time-based features
+xtrain$year <- lubridate::year(xtrain$Original_Quote_Date)
+xtest$year <- lubridate::year(xtest$Original_Quote_Date)
+
+xtrain$month <- lubridate::month(xtrain$Original_Quote_Date)
+xtest$month <- lubridate::month(xtest$Original_Quote_Date)
+
+xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
+
+# store the files
+write_csv(xtrain, path = "./input/xtrain_kb1.csv")
+write_csv(xtest, path = "./input/xtest_kb1.csv")
+
+## KB set v2 ####
+# - create more factors (pairwise combinations)
+# - map everything to integers
+# read
+xtrain <- read_csv("./input/train.csv")
+xtest <- read_csv("./input/test.csv")
+
+# process
+xtrain[is.na(xtrain)]   <- 0; xtest[is.na(xtest)]   <- 0
+
+# convert categorical ones to numeric
+for (f in colnames(xtrain)) {
+  if (class(xtrain[[f]])=="character") {
+    levels <- unique(c(xtrain[[f]], xtest[[f]]))
+    xtrain[[f]] <- as.integer(factor(xtrain[[f]], levels=levels))
+    xtest[[f]]  <- as.integer(factor(xtest[[f]],  levels=levels))
+  }
+  msg(f)
+}
+
+# time-based features
+xtrain$year <- lubridate::year(xtrain$Original_Quote_Date)
+xtest$year <- lubridate::year(xtest$Original_Quote_Date)
+
+xtrain$month <- lubridate::month(xtrain$Original_Quote_Date)
+xtest$month <- lubridate::month(xtest$Original_Quote_Date)
+
+xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
+
+# store the files
+write_csv(xtrain, path = "./input/xtrain_kb1.csv")
+write_csv(xtest, path = "./input/xtest_kb1.csv")
