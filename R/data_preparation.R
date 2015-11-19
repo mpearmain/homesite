@@ -101,16 +101,9 @@ xtest[, dset := NULL]
 
 xtrain[, QuoteConversion_Flag := y]
 
-# Now split the train in train and valid
-val_size <- 0.1 * NROW(xtrain)
-subrange <- sample(nrow(xtrain), size = val_size)
-tra <- xtrain[-subrange,]
-valid <- xtrain[subrange,]
 
-write.csv(xtrain, 'input/xtrain_full.csv', row.names = F)
-write.csv(tra, 'input/xtrain.csv', row.names = F)
-write.csv(valid, 'input/xvalid.csv', row.names = F)
-write.csv(xtest, 'input/xtest.csv', row.names = F)
+write.csv(xtrain, 'input/xtrain_mp1.csv', row.names = F)
+write.csv(xtest, 'input/xtest_mp1.csv', row.names = F)
 
 
 
