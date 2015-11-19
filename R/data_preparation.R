@@ -55,8 +55,9 @@ bigD[, Date := NULL]
 
 # Lets model temporal effects in time
 # http://www.rochester.edu/College/PSC/signorino/research/Carter_Signorino_2010_PA.pdf
-bigD[, logdaysDurOrigQuote2 := log((daysDurOrigQuote)^2 - daysDurOrigQuote)]
-bigD[, logdaysDurOrigQuote3 := log((daysDurOrigQuote)^3 - daysDurOrigQuote)]
+# Needs more work for anything useful
+#bigD[, logdaysDurOrigQuote2 := log((daysDurOrigQuote)^2 - daysDurOrigQuote)]
+#bigD[, logdaysDurOrigQuote3 := log((daysDurOrigQuote)^3 - daysDurOrigQuote)]
 
 bigD[is.na(bigD)] <- -1
 
