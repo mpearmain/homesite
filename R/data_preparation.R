@@ -7,6 +7,8 @@
 # These output can then be used in all subsequent models, and the prediction can ben ensembled from
 # the validation using ridge regression (say).
 
+
+## packages loading ####
 library(data.table)
 library(caret)
 library(stringr)
@@ -14,6 +16,7 @@ library(lubridate)
 
 set.seed(260681)
 
+## MP set v1 ####
 # Working Dir should be top level with folders ./R, ./input, ./output
 train <- fread('input/train.csv')
 test <- fread('input/test.csv')
@@ -30,7 +33,7 @@ stopifnot(dim(test)[2] ==dim(train)[2])
 bigD <- rbind(train, test)
 rm(list = c('train', 'test'))
 
-################################ Data Manipulations ##############################################
+## Data Manipulations 
 # Lets solve the Field10 issue: 1,165 => 1165.
 bigD[, Field10 := as.numeric(gsub(",", "", Field10))]
 
@@ -91,7 +94,7 @@ for (f in colnames(bigD)) {
 # for the factor cols.
 
 
-############################## Split files & Export ##########################################
+## Split files & Export 
 xtrain <- bigD[dset == 0, ]
 xtest <- bigD[dset == 1, ]
 rm(bigD)
@@ -105,6 +108,7 @@ xtrain[, QuoteConversion_Flag := y]
 write.csv(xtrain, 'input/xtrain_mp1.csv', row.names = F)
 write.csv(xtest, 'input/xtest_mp1.csv', row.names = F)
 
+## KB set v0 ####
 
 
 
