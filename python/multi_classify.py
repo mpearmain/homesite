@@ -2,13 +2,9 @@ __author__ = 'michael.pearmain'
 
 import pandas as pd
 from sklearn.metrics import roc_auc_score as auc
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier, BaggingClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.lda import LDA
-from sklearn.qda import QDA
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
+from sklearn.svm import SVC
 
 # Got a little bored so decided to just build a loop over a whole bunch of classifiers
 # who knows, might be good on the ensemble.
@@ -40,20 +36,15 @@ x_train = x_train.fillna(-1)
 x_valid = x_valid.fillna(-1)
 test = test.fillna(-1)
 
-names = ["Nearest Neighbors", "Random Forest", "Extra Trees", "AdaBoost", "Naive Bayes",
-         "Decision Tree", "Bagging Classifier", "Passive Aggressive", "Linear Discriminant Analysis",
-         "Quadratic Discriminant Analysis"]
+names = ["Random Forest", "Extra Trees", "AdaBoost",
+         "Decision Tree", "Linear SVM", "RBF SVM"]
 classifiers = [
-    KNeighborsClassifier(10000),
-    RandomForestClassifier(max_depth=12, n_estimators=500, n_jobs=-1),
-    ExtraTreesClassifier(max_depth=12, n_estimators=500, n_jobs=-1),
-    AdaBoostClassifier(RandomForestClassifier(max_depth=12,n_jobs=-1),algorithm="SAMME",n_estimators=500),
-    GaussianNB(),
+    RandomForestClassifier(max_depth=30, n_estimators=1000, n_jobs=-1),
+    ExtraTreesClassifier(max_depth=30, n_estimators=1000, n_jobs=-1),
+    AdaBoostClassifier(ExtraTreesClassifier(max_depth=12,n_jobs=-1),algorithm="SAMME",n_estimators=1000),
     DecisionTreeClassifier(max_depth=12),
-    BaggingClassifier(n_estimators=500, n_jobs=-1),
-    PassiveAggressiveClassifier(n_iter=500, n_jobs=-1),
-    LDA(),
-    QDA()]
+    SVC(kernel="linear", C=0.025),
+    SVC(gamma=2, C=1)]
 # iterate over classifiers
 for name, clf in zip(names, classifiers):
     clf.fit(x_train, y_train)
