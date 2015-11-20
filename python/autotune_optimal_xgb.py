@@ -6,9 +6,9 @@ import pandas as pd
 import xgboost as xgb
 
 print('Loading Train data set')
-x_train = pd.read_csv('input/xtrain_full.csv')
+x_train = pd.read_csv('input/xtrain_kb2.csv')
 print('Loading Test data set')
-test = pd.read_csv('input/xtest.csv')
+test = pd.read_csv('input/xtest_kb2.csv')
 
 sample = pd.read_csv('input/sample_submission.csv')
 
