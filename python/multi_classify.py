@@ -40,21 +40,21 @@ x_train = x_train.fillna(-1)
 x_valid = x_valid.fillna(-1)
 test = test.fillna(-1)
 
-names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
-         "Random Forest", "AdaBoost", "Naive Bayes", "Linear Discriminant Analysis",
+names = ["Nearest Neighbors", "Random Forest", "AdaBoost", "Naive Bayes",
+         "Linear SVM", "RBF SVM", "Decision Tree", "Linear Discriminant Analysis",
          "Quadratic Discriminant Analysis"]
 classifiers = [
-    KNeighborsClassifier(5),
+    KNeighborsClassifier(1000),
+    RandomForestClassifier(max_depth=12, n_estimators=500, max_features=1,n_jobs=-1),
+    AdaBoostClassifier(RandomForestClassifier(max_depth=12,n_jobs=-1),algorithm="SAMME",n_estimators=50),
+    GaussianNB(),
     SVC(kernel="linear", C=0.025),
     SVC(gamma=2, C=1),
     DecisionTreeClassifier(max_depth=5),
-    RandomForestClassifier(max_depth=5, n_estimators=50, max_features=1,n_jobs=-1),
-    AdaBoostClassifier(DecisionTreeClassifier(max_depth=5),algorithm="SAMME",n_estimators=50),
-    GaussianNB(),
     LDA(),
     QDA()]
 # iterate over classifiers
 for name, clf in zip(names, classifiers):
     clf.fit(x_train, y_train)
     pred_valid = clf.predict_proba(x_valid)[:,1]
-    print 'AUC for classifier = ', name, ' ', auc(y_valid, pred_valid)
+    print 'AUC for classifier', name, '=', auc(y_valid, pred_valid)
