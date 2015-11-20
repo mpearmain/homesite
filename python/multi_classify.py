@@ -3,9 +3,9 @@ __author__ = 'michael.pearmain'
 import pandas as pd
 from sklearn.metrics import roc_auc_score as auc
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
+from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier, BaggingClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.lda import LDA
 from sklearn.qda import QDA
@@ -40,17 +40,18 @@ x_train = x_train.fillna(-1)
 x_valid = x_valid.fillna(-1)
 test = test.fillna(-1)
 
-names = ["Nearest Neighbors", "Random Forest", "AdaBoost", "Naive Bayes",
-         "Linear SVM", "RBF SVM", "Decision Tree", "Linear Discriminant Analysis",
+names = ["Nearest Neighbors", "Random Forest", "Extra Trees", "AdaBoost", "Naive Bayes",
+         "Decision Tree", "Bagging Classifier", "Passive Aggressive", "Linear Discriminant Analysis",
          "Quadratic Discriminant Analysis"]
 classifiers = [
-    KNeighborsClassifier(1000),
-    RandomForestClassifier(max_depth=12, n_estimators=500, max_features=1,n_jobs=-1),
-    AdaBoostClassifier(RandomForestClassifier(max_depth=12,n_jobs=-1),algorithm="SAMME",n_estimators=50),
+    KNeighborsClassifier(10000),
+    RandomForestClassifier(max_depth=12, n_estimators=500, n_jobs=-1),
+    ExtraTreesClassifier(max_depth=12, n_estimators=500, n_jobs=-1),
+    AdaBoostClassifier(RandomForestClassifier(max_depth=12,n_jobs=-1),algorithm="SAMME",n_estimators=500),
     GaussianNB(),
-    SVC(kernel="linear", C=0.025),
-    SVC(gamma=2, C=1),
-    DecisionTreeClassifier(max_depth=5),
+    DecisionTreeClassifier(max_depth=12),
+    BaggingClassifier(n_estimators=500, n_jobs=-1),
+    PassiveAggressiveClassifier(n_iter=500, n_jobs=-1),
     LDA(),
     QDA()]
 # iterate over classifiers
