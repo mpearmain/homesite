@@ -14,6 +14,7 @@ library(caret)
 library(stringr)
 library(readr)
 library(lubridate)
+require(lme4)
 
 set.seed(260681)
 
@@ -198,6 +199,87 @@ write_csv(xtest, path = "./input/xtest_kb2.csv")
 
 ## KB set v3 ####
 # same as v1, but factors replaced by response rates
+# map everything to integers
+# read
+xtrain <- read_csv("./input/train.csv")
+xtest <- read_csv("./input/test.csv")
+
+# process
+xtrain[is.na(xtrain)]   <- 0; xtest[is.na(xtest)]   <- 0
+
+xfold <- read_csv(file = "./input/xfolds.csv")
+idFix <- list()
+for (ii in 1:10)
+{
+  idFix[[ii]] <- which(xfold$fold10 == ii)
+}
+rm(xfold,ii)  
+
+# grab factor variables
+factor_vars <- colnames(xtrain)[grep("fac", colnames(xtrain))]
+
+# loop over factor variables, create a response rate version for each
+for (varname in factor_vars)
+{
+  # placeholder for the new variable values
+  x <- rep(NA, nrow(xtrain))
+  for (ii in seq(idFix))
+  {
+    # separate ~ fold
+    idx <- idFix[[ii]]
+    x0 <- xtrain[-idx, factor_vars]; x1 <- xtrain[idx, factor_vars]
+    y0 <- y[-idx]; y1 <- y[idx]
+    # take care of factor lvl mismatches
+    x0[,varname] <- factor(as.character(x0[,varname]))
+    # fit LMM model
+    myForm <- as.formula (paste ("y0 ~ (1|", varname, ")"))
+    myLME <- lmer (myForm, x0, REML=FALSE, verbose=F)
+    myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+    # table to match to the original
+    myLMERDF <- data.frame (levelName = as.character(levels(x0[,varname])), myDampVal = myRanEf+myFixEf)
+    rownames(myLMERDF) <- NULL
+    x[idx] <- myLMERDF[,2][match(xtrain[idx, varname], myLMERDF[,1])]
+    x[idx][is.na(x[idx])] <- mean(y0)
+  }
+  rm(x0,x1,y0,y1, myLME, myLMERDF, myFixEf, myRanEf)
+  # add the new variable
+  xtrain[,paste(varname, "dmp", sep = "")] <- x
+  
+  # create the same on test set
+  xtrain[,varname] <- factor(as.character(xtrain[,varname]))
+  x <- rep(NA, nrow(xtest))
+  # fit LMM model
+  myForm <- as.formula (paste ("y ~ (1|", varname, ")"))
+  myLME <- lmer (myForm, xtrain[,factor_vars], REML=FALSE, verbose=F)
+  myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+  # table to match to the original
+  myLMERDF <- data.frame (levelName = as.character(levels(xtrain[,varname])), myDampVal = myRanEf+myFixEf)
+  rownames(myLMERDF) <- NULL
+  x <- myLMERDF[,2][match(xtest[, varname], myLMERDF[,1])]
+  x[is.na(x)] <- mean(y)
+  xtest[,paste(varname, "dmp", sep = "")] <- x
+  msg(varname)
+}
+
+# drop the factors
+ix <- which(colnames(xtrain) %in% factor_vars)
+xtrain <- xtrain[,-ix]
+xtest <- xtest[,-ix]
+
+
+# time-based features
+xtrain$year <- lubridate::year(xtrain$Original_Quote_Date)
+xtest$year <- lubridate::year(xtest$Original_Quote_Date)
+
+xtrain$month <- lubridate::month(xtrain$Original_Quote_Date)
+xtest$month <- lubridate::month(xtest$Original_Quote_Date)
+
+xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
+
+# store the files
+write_csv(xtrain, path = "./input/xtrain_kb1.csv")
+write_csv(xtest, path = "./input/xtest_kb1.csv")
+
 
 ## KB set v4 ####
 # same as v2, but factors replaced by response rates
