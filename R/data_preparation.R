@@ -277,8 +277,8 @@ xtest$month <- lubridate::month(xtest$Original_Quote_Date)
 xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
 
 # store the files
-write_csv(xtrain, path = "./input/xtrain_kb1.csv")
-write_csv(xtest, path = "./input/xtest_kb1.csv")
+write_csv(xtrain, path = "./input/xtrain_kb3.csv")
+write_csv(xtest, path = "./input/xtest_kb3.csv")
 
 
 ## KB set v4 ####
