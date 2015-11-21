@@ -4,7 +4,7 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import roc_auc_score as auc
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, BaggingClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 
@@ -79,25 +79,25 @@ for name, col_name, clf in zip(names, col_names, classifiers):
 
 print 'Building XGB models..'
 # Run XGB on the new feature dataset.
-clf = xgb.XGBClassifier(n_estimators=900,
+clf = xgb.XGBClassifier(n_estimators=750,
                             nthread=-1,
-                            max_depth=8,
+                            max_depth=20,
                             learning_rate=0.03,
                             silent=True,
                             subsample=0.8,
                             colsample_bytree=0.85,
                             seed=seed)
 
-xgb_model = clf.fit(xgb_train, xgb_y, eval_metric="auc")
-xgb_model_base = clf.fit(xgb_train[meta_names], xgb_y, eval_metric="auc")
-
 print 'Base features only xgb model training'
+xgb_model_base = clf.fit(xgb_train[meta_names], xgb_y, eval_metric="auc", eval_set=[(valid_train, valid_y)], early_stopping_rounds=25)
 pred_valid_base = clf.predict_proba(valid_train[meta_names])[:,1]
-print 'AUC for xgb base features =', auc(valid_y, pred_valid)
+print 'AUC for xgb base features =', auc(valid_y, pred_valid_base)
 
 print 'Base features + meta classifer features xgb model training'
+xgb_model = clf.fit(xgb_train, xgb_y, eval_metric="auc",eval_set=[(valid_train, valid_y)], early_stopping_rounds=25)
 pred_valid = clf.predict_proba(valid_train)[:,1]
 print 'AUC for xgb meta =', auc(valid_y, pred_valid)
 
-sample.QuoteConversion_Flag = pred_valid
+pred_test = clf.predict_proba(test)[:,1]
+sample.QuoteConversion_Flag = pred_test
 sample.to_csv('output/predTest_homesite_multiClassify_xgb_train_mp1_21112015.csv', index=False)
