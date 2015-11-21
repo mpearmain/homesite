@@ -26,7 +26,7 @@ for k in range(no_bags):
     clf = xgb.XGBClassifier(n_estimators=900,
                             nthread=-1,
                             max_depth=8,
-                            learning_rate=0.033,
+                            learning_rate=0.03,
                             silent=True,
                             subsample=0.8,
                             colsample_bytree=0.85,
