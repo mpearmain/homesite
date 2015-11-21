@@ -85,5 +85,10 @@ clf = xgb.XGBClassifier(n_estimators=900,
                             seed=seed)
 
 xgb_model = clf.fit(xgb_train, xgb_y, eval_metric="auc")
+xgb_model_base = clf.fit(xgb_train[meta_names], xgb_y, eval_metric="auc")
+
 pred_valid = clf.predict_proba(valid_train)[:,1]
+pred_valid_base = clf.predict_proba(valid_train[meta_names])[:,1]
+
+print 'AUC for xgb base features =', auc(valid_y, pred_valid)
 print 'AUC for xgb meta =', auc(valid_y, pred_valid)
