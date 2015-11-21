@@ -1,12 +1,6 @@
-# Data Creation Script.
-# Aim is to produce 3 files:
-# Train
-# Validation (for blending later) -> also for basic CV (LB feedback looks reasonable, i.e stable data)
-# Test
-#
+# Data Creation Script
 # These output can then be used in all subsequent models, and the prediction can ben ensembled from
 # the validation using ridge regression (say).
-
 
 ## packages loading ####
 library(data.table)
@@ -15,6 +9,7 @@ library(stringr)
 library(readr)
 library(lubridate)
 require(lme4)
+require(chron)
 
 set.seed(260681)
 
@@ -199,7 +194,6 @@ write_csv(xtest, path = "./input/xtest_kb2.csv")
 
 ## KB set v3 ####
 # same as v1, but factors replaced by response rates
-# map everything to integers
 # read
 xtrain <- read_csv("./input/train.csv")
 xtest <- read_csv("./input/test.csv")
@@ -215,8 +209,23 @@ for (ii in 1:10)
 }
 rm(xfold,ii)  
 
+# time-based features => treat as factors
+xtrain$year <- as.character(year(xtrain$Original_Quote_Date))
+xtest$year <- as.character(year(xtest$Original_Quote_Date))
+
+xtrain$month <- as.character(month(xtrain$Original_Quote_Date))
+xtest$month <- as.character(month(xtest$Original_Quote_Date))
+
+mdy <- chron::month.day.year(xtrain$Original_Quote_Date)
+xtrain$dow <- as.character(day.of.week(mdy$month, mdy$day, mdy$year))
+
+mdy <- chron::month.day.year(xtest$Original_Quote_Date)
+xtest$dow <- as.character(day.of.week(mdy$month, mdy$day, mdy$year))
+
+xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
+
 # grab factor variables
-factor_vars <- colnames(xtrain)[grep("fac", colnames(xtrain))]
+factor_vars <- colnames(xtrain)[which(sapply(xtrain, class) == "character")]
 
 # loop over factor variables, create a response rate version for each
 for (varname in factor_vars)
@@ -228,7 +237,7 @@ for (varname in factor_vars)
     # separate ~ fold
     idx <- idFix[[ii]]
     x0 <- xtrain[-idx, factor_vars]; x1 <- xtrain[idx, factor_vars]
-    y0 <- y[-idx]; y1 <- y[idx]
+    y0 <- xtrain$QuoteConversion_Flag[-idx]; y1 <- xtrain$QuoteConversion_Flag[idx]
     # take care of factor lvl mismatches
     x0[,varname] <- factor(as.character(x0[,varname]))
     # fit LMM model
@@ -247,6 +256,7 @@ for (varname in factor_vars)
   
   # create the same on test set
   xtrain[,varname] <- factor(as.character(xtrain[,varname]))
+  y <- xtrain$QuoteConversion_Flag
   x <- rep(NA, nrow(xtest))
   # fit LMM model
   myForm <- as.formula (paste ("y ~ (1|", varname, ")"))
@@ -266,20 +276,98 @@ ix <- which(colnames(xtrain) %in% factor_vars)
 xtrain <- xtrain[,-ix]
 xtest <- xtest[,-ix]
 
-
-# time-based features
-xtrain$year <- lubridate::year(xtrain$Original_Quote_Date)
-xtest$year <- lubridate::year(xtest$Original_Quote_Date)
-
-xtrain$month <- lubridate::month(xtrain$Original_Quote_Date)
-xtest$month <- lubridate::month(xtest$Original_Quote_Date)
-
-xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
-
 # store the files
 write_csv(xtrain, path = "./input/xtrain_kb3.csv")
 write_csv(xtest, path = "./input/xtest_kb3.csv")
 
-
 ## KB set v4 ####
-# same as v2, but factors replaced by response rates
+# ~ v1, but create (almost) everything as factors
+# read
+xtrain <- read_csv("./input/train.csv")
+xtest <- read_csv("./input/test.csv")
+
+# process
+xtrain[is.na(xtrain)]   <- 0; xtest[is.na(xtest)]   <- 0
+
+xfold <- read_csv(file = "./input/xfolds.csv")
+idFix <- list()
+for (ii in 1:10)
+{
+  idFix[[ii]] <- which(xfold$fold10 == ii)
+}
+rm(xfold,ii)  
+
+# time-based features => treat as factors
+xtrain$year <- as.character(year(xtrain$Original_Quote_Date))
+xtest$year <- as.character(year(xtest$Original_Quote_Date))
+
+xtrain$month <- as.character(month(xtrain$Original_Quote_Date))
+xtest$month <- as.character(month(xtest$Original_Quote_Date))
+
+mdy <- chron::month.day.year(xtrain$Original_Quote_Date)
+xtrain$dow <- as.character(day.of.week(mdy$month, mdy$day, mdy$year))
+
+mdy <- chron::month.day.year(xtest$Original_Quote_Date)
+xtest$dow <- as.character(day.of.week(mdy$month, mdy$day, mdy$year))
+
+xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
+
+# count number of distinct values
+nof_vals <- sapply(xtrain, function(s) nlevels(factor(s)))
+
+# grab factor variables
+factor_vars <- colnames(xtrain)[which(nof_vals < 100)]
+factor_vars <- setdiff(factor_vars, "QuoteConversion_Flag")
+
+# loop over factor variables, create a response rate version for each
+for (varname in factor_vars)
+{
+  # placeholder for the new variable values
+  x <- rep(NA, nrow(xtrain))
+  for (ii in seq(idFix))
+  {
+    # separate ~ fold
+    idx <- idFix[[ii]]
+    x0 <- xtrain[-idx, factor_vars]; x1 <- xtrain[idx, factor_vars]
+    y0 <- xtrain$QuoteConversion_Flag[-idx]; y1 <- xtrain$QuoteConversion_Flag[idx]
+    # take care of factor lvl mismatches
+    x0[,varname] <- factor(as.character(x0[,varname]))
+    # fit LMM model
+    myForm <- as.formula (paste ("y0 ~ (1|", varname, ")"))
+    myLME <- lmer (myForm, x0, REML=FALSE, verbose=F)
+    myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+    # table to match to the original
+    myLMERDF <- data.frame (levelName = as.character(levels(x0[,varname])), myDampVal = myRanEf+myFixEf)
+    rownames(myLMERDF) <- NULL
+    x[idx] <- myLMERDF[,2][match(xtrain[idx, varname], myLMERDF[,1])]
+    x[idx][is.na(x[idx])] <- mean(y0)
+  }
+  rm(x0,x1,y0,y1, myLME, myLMERDF, myFixEf, myRanEf)
+  # add the new variable
+  xtrain[,paste(varname, "dmp", sep = "")] <- x
+  
+  # create the same on test set
+  xtrain[,varname] <- factor(as.character(xtrain[,varname]))
+  y <- xtrain$QuoteConversion_Flag
+  x <- rep(NA, nrow(xtest))
+  # fit LMM model
+  myForm <- as.formula (paste ("y ~ (1|", varname, ")"))
+  myLME <- lmer (myForm, xtrain[,factor_vars], REML=FALSE, verbose=F)
+  myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+  # table to match to the original
+  myLMERDF <- data.frame (levelName = as.character(levels(xtrain[,varname])), myDampVal = myRanEf+myFixEf)
+  rownames(myLMERDF) <- NULL
+  x <- myLMERDF[,2][match(xtest[, varname], myLMERDF[,1])]
+  x[is.na(x)] <- mean(y)
+  xtest[,paste(varname, "dmp", sep = "")] <- x
+  msg(varname)
+}
+
+# drop the factors
+ix <- which(colnames(xtrain) %in% factor_vars)
+xtrain <- xtrain[,-ix]
+xtest <- xtest[,-ix]
+
+# store the files
+write_csv(xtrain, path = "./input/xtrain_kb4.csv")
+write_csv(xtest, path = "./input/xtest_kb4.csv")
