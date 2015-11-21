@@ -4,7 +4,6 @@ __author__ = 'mpearmain'
 
 import pandas as pd
 import xgboost as xgb
-from math import log, exp
 
 print('Loading Train data set')
 x_train = pd.read_csv('input/xtrain_full.csv')
@@ -24,7 +23,7 @@ pred_average = True
 no_bags = 10
 for k in range(no_bags):
     print 'Building bag:', k
-    clf = xgb.XGBClassifier(n_estimators=850,
+    clf = xgb.XGBClassifier(n_estimators=900,
                             nthread=-1,
                             max_depth=8,
                             learning_rate=0.033,
@@ -36,15 +35,11 @@ for k in range(no_bags):
     preds = clf.predict_proba(test)[:,1]
     if type(pred_average) == bool:
         pred_average = preds.copy()/no_bags
-        pred_gm = log(pred_average.copy())
     else:
         pred_average += preds/no_bags
-        pred_gm += log(pred_average.copy())
-
-pred_gm_final = exp((1/no_bags) * pred_gm)
 
 sample.QuoteConversion_Flag = pred_average
-sample.to_csv('output/xgb_homesite_10bag_AR_19112015.csv', index=False)
+sample.to_csv('output/xgb_homesite_10bag_19112015.csv', index=False)
 
-sample.QuoteConversion_Flag = pred_gm_final
-sample.to_csv('output/xgb_homesite_10bag_GM_19112015.csv', index=False)
+sample.QuoteConversion_Flag = pred_average
+sample.to_csv('output/xgb_homesite_10bag_19112015.csv', index=False)
