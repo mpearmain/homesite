@@ -5,6 +5,7 @@ import xgboost as xgb
 from sklearn.metrics import roc_auc_score as auc
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 
 
@@ -53,12 +54,13 @@ print 'Done...'
 test = test.drop('QuoteNumber', axis=1)
 
 seed = 260681
-names = ["Random Forest", "Extra Trees", "Decision Tree", "Logistic Regression"]
-col_names =["predRF", "predET", "predDT", "predLR"]
+names = ["Random Forest", "Extra Trees", "Decision Tree", "Logistic Regression", "Naive Bayes"]
+col_names =["predRF", "predET", "predDT", "predLR", "predNB"]
 classifiers = [RandomForestClassifier(max_depth=30, n_estimators=1000, n_jobs=-1, random_state=seed),
                ExtraTreesClassifier(max_depth=30, n_estimators=1000, n_jobs=-1, random_state=seed),
-               DecisionTreeClassifier(max_depth=30, random_state=seed),
-               LogisticRegression(random_state=seed)]
+               DecisionTreeClassifier(max_depth=8, random_state=seed),
+               LogisticRegression(random_state=seed),
+               GaussianNB()]
 
 # Now the fun part, build 'weak' classifers on the above models - easy to add more
 # check the AUC on the validation set
@@ -91,10 +93,10 @@ xgb_model_base = clf.fit(xgb_train[meta_names], xgb_y, eval_metric="auc")
 
 print 'Base features only xgb model training'
 pred_valid_base = clf.predict_proba(valid_train[meta_names])[:,1]
+print 'AUC for xgb base features =', auc(valid_y, pred_valid)
+
 print 'Base features + meta classifer features xgb model training'
 pred_valid = clf.predict_proba(valid_train)[:,1]
-
-print 'AUC for xgb base features =', auc(valid_y, pred_valid)
 print 'AUC for xgb meta =', auc(valid_y, pred_valid)
 
 sample.QuoteConversion_Flag = pred_valid
