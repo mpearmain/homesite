@@ -52,12 +52,12 @@ print 'Done...'
 
 test = test.drop('QuoteNumber', axis=1)
 
-seed = 1234
+seed = 260681
 names = ["Random Forest", "Extra Trees", "Decision Tree", "Logistic Regression"]
 col_names =["predRF", "predET", "predDT", "predLR"]
-classifiers = [RandomForestClassifier(max_depth=10, n_estimators=100, n_jobs=-1, random_state=seed),
-               ExtraTreesClassifier(max_depth=10, n_estimators=100, n_jobs=-1, random_state=seed),
-               DecisionTreeClassifier(max_depth=10, random_state=seed),
+classifiers = [RandomForestClassifier(max_depth=30, n_estimators=1000, n_jobs=-1, random_state=seed),
+               ExtraTreesClassifier(max_depth=30, n_estimators=1000, n_jobs=-1, random_state=seed),
+               DecisionTreeClassifier(max_depth=30, random_state=seed),
                LogisticRegression(random_state=seed)]
 
 # Now the fun part, build 'weak' classifers on the above models - easy to add more
@@ -72,8 +72,10 @@ for name, col_name, clf in zip(names, col_names, classifiers):
     pred_valid = clf.predict_proba(valid_train[meta_names])[:,1]
     valid_train[col_name] = clf.predict_proba(valid_train[meta_names])[:,1]
     xgb_train[col_name] = clf.predict_proba(xgb_train[meta_names])[:,1]
+    test[col_name] = clf.predict_proba(test[meta_names])[:,1]
     print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
 
+print 'Building XGB models..'
 # Run XGB on the new feature dataset.
 clf = xgb.XGBClassifier(n_estimators=900,
                             nthread=-1,
@@ -87,8 +89,13 @@ clf = xgb.XGBClassifier(n_estimators=900,
 xgb_model = clf.fit(xgb_train, xgb_y, eval_metric="auc")
 xgb_model_base = clf.fit(xgb_train[meta_names], xgb_y, eval_metric="auc")
 
-pred_valid = clf.predict_proba(valid_train)[:,1]
+print 'Base features only xgb model training'
 pred_valid_base = clf.predict_proba(valid_train[meta_names])[:,1]
+print 'Base features + meta classifer features xgb model training'
+pred_valid = clf.predict_proba(valid_train)[:,1]
 
 print 'AUC for xgb base features =', auc(valid_y, pred_valid)
 print 'AUC for xgb meta =', auc(valid_y, pred_valid)
+
+sample.QuoteConversion_Flag = pred_valid
+sample.to_csv('output/predTest_homesite_multiClassify_xgb_train_mp1_21112015.csv', index=False)
