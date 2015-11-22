@@ -316,7 +316,7 @@ xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
 nof_vals <- sapply(xtrain, function(s) nlevels(factor(s)))
 
 # grab factor variables
-factor_vars <- colnames(xtrain)[which(nof_vals < 100)]
+factor_vars <- colnames(xtrain)[which( (nof_vals < 100) & (nof_vals > 1))]
 factor_vars <- setdiff(factor_vars, "QuoteConversion_Flag")
 
 # loop over factor variables, create a response rate version for each
@@ -363,11 +363,23 @@ for (varname in factor_vars)
   msg(varname)
 }
 
-# drop the factors
-ix <- which(colnames(xtrain) %in% factor_vars)
-xtrain <- xtrain[,-ix]
-xtest <- xtest[,-ix]
+# drop the original factors
+for (xn in factor_vars)
+{
+  xtrain[,xn] <- NULL
+  xtest[,xn] <- NULL
+}
 
+# SFSG # 
+
+
+# drop constant columns 
+xsd <- apply(xtrain,2,sd); xnames <- names(which(xsd == 0))
+for (xn in xnames)
+{
+  xtrain[,xn] <- NULL
+  xtest[,xn] <- NULL
+}
 # store the files
 write_csv(xtrain, path = "./input/xtrain_kb4.csv")
 write_csv(xtest, path = "./input/xtest_kb4.csv")
