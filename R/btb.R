@@ -28,9 +28,12 @@ xtest <- read_csv("./input/xtest_kb4.csv")
 
 ## fit model ####
 # separate into training and validation
-set.seed(20151110)
-isValid <- sample(nrow(xtrain), size = 20000, replace = F)
+xfolds <- read_csv("./input/xfolds.csv")
+isValid <- which(xfolds$valid == 1)
 y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
+xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
+
+# map to distances from kmeans clusters
 
 # setup xgb
 # xgboost format
