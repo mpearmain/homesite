@@ -6,44 +6,42 @@ require(data.table)
 options(scipen=999)
 set.seed(1004)
 
-#41599 public
-
-train = fread('/home/mikeskim/Desktop/kaggle/otto/data/train.csv',header=TRUE,data.table=F)
-test = fread('/home/mikeskim/Desktop/kaggle/otto/data/test.csv',header=TRUE,data.table = F)
+train = fread('input/xtrain_mp1.csv',header=TRUE,data.table=F)
+test = fread('input/xtest_mp1.csv',header=TRUE,data.table = F)
 train = train[,-1]
 test = test[,-1]
 
 y = train[,ncol(train)]
-y = gsub('Class_','',y)
-y = as.integer(y)-1 #xgboost take features in [0,numOfClass)
 
 x = rbind(train[,-ncol(train)],test)
 x = as.matrix(x)
 x = matrix(as.numeric(x),nrow(x),ncol(x))
 
-x = 1/(1+exp(-sqrt(x)))
+# Run an XGB test prior to tnse features.
+# Previous without was around 0.96800
+trind = 1:length(y)
+param <- list(objective = "binary:logistic", 
+              booster = "gbtree",
+              eval_metric = "auc",
+              eta = 0.02,
+              max_depth = 7, 
+              subsample = 0.86,
+              colsample_bytree = 0.68)
 
-tsne <- Rtsne(as.matrix(x), check_duplicates = FALSE, pca = FALSE, 
-              perplexity=30, theta=0.5, dims=2)
+bst.cv = xgb.cv(param=param, data = x[trind,], label = y, nfold = 4, nrounds=1900)
 
-x = round(x,3)
+# Lets run a TSNE model to see if creating extra features helps.
+#x = 1/(1+exp(-sqrt(x)))
 
-##test here
-#trind = 1:length(y)
-param <- list("objective" = "multi:softprob",
-              "eval_metric" = "mlogloss",
-              "num_class" = 9,
-              "nthread" = 7)
+# Running this takes a LONG time.
+tsne <- Rtsne(as.matrix(x), 
+              check_duplicates = FALSE, 
+              pca = FALSE, 
+              perplexity=30, 
+              theta=0.5, 
+              dims=2)
 
-#bst.cv = xgb.cv(param=param, data = x[trind,], label = y, 
-#                nfold = 4, 
-#                column_subsample = 0.8, #subsample changes only hurt.
-#                nrounds=60, max.depth=11, eta=0.46, min_child_weight=10)
-
-#[59]  train-mlogloss:0.204678+0.004478	test-mlogloss:0.488262+0.011556 no add
-#[55]  train-mlogloss:0.190645+0.003466	test-mlogloss:0.479680+0.010798 added tsne 
-
-
+# Add to the mix of features
 x = cbind(x, tsne$Y[,1]) 
 x = cbind(x, tsne$Y[,2])
 
@@ -53,18 +51,23 @@ teind = (nrow(train)+1):nrow(x)
 trainX = x[trind,]
 testX = x[teind,]
 
-
 # Set necessary parameter
-param <- list("objective" = "multi:softprob",
-              "eval_metric" = "mlogloss",
-              "num_class" = 9,
-              "nthread" = 7)
-
+param <- list(objective = "binary:logistic", 
+              booster = "gbtree",
+              eval_metric = "auc",
+              eta = 0.02,
+              max_depth = 7, 
+              subsample = 0.86,
+              colsample_bytree = 0.68)
 
 # Train the model
-nround = 1200
-bst = xgboost(param=param, data = trainX, label = y,
-              nrounds=nround, max.depth=8, eta=0.03, min_child_weight=3)
+nround = 1900
+bst = xgboost(param=param, data = trainX, label = y,nrounds=nround)
+
+# Comparison of models.
+# Without tnse
+# With tnse
+
 
 # Make prediction
 pred = predict(bst,testX)
