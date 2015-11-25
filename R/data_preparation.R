@@ -22,6 +22,7 @@ msg <- function(mmm,...)
 }
 
 ## MP set v1 ####
+
 BuildMP1 <- function() {
   # Wrapping the builds in functions to make it easier to call just one Dataset Build.
   # Working Dir should be top level with folders ./R, ./input, ./output
@@ -115,7 +116,9 @@ BuildMP1 <- function() {
 
 
 BuildMP2 <- function() {
-  ## MP set v2 ####
+  
+
+## MP set v2 ####
   # Same as V1 only adding tnse features to the mix.#
   
   train = fread('input/xtrain_mp1.csv',header=TRUE,data.table=F)
@@ -434,9 +437,6 @@ for (xn in factor_vars)
   xtest[,xn] <- NULL
 }
 
-# SFSG # 
-
-
 # drop constant columns 
 xsd <- apply(xtrain,2,sd); xnames <- names(which(xsd == 0))
 for (xn in xnames)
@@ -447,3 +447,122 @@ for (xn in xnames)
 # store the files
 write_csv(xtrain, path = "./input/xtrain_kb4.csv")
 write_csv(xtest, path = "./input/xtest_kb4.csv")
+
+## KB set v5 ####
+# v2 + treat almost everything as factors
+# read
+xtrain <- read_csv("./input/train.csv")
+xtest <- read_csv("./input/test.csv")
+
+# process
+xtrain[is.na(xtrain)]   <- 0; xtest[is.na(xtest)]   <- 0
+
+# time-based features => treat as character
+xtrain$year <- as.character(year(xtrain$Original_Quote_Date))
+xtest$year <- as.character(year(xtest$Original_Quote_Date))
+
+xtrain$month <- as.character(month(xtrain$Original_Quote_Date))
+xtest$month <- as.character(month(xtest$Original_Quote_Date))
+
+mdy <- chron::month.day.year(xtrain$Original_Quote_Date)
+xtrain$dow <- as.character(day.of.week(mdy$month, mdy$day, mdy$year))
+
+mdy <- chron::month.day.year(xtest$Original_Quote_Date)
+xtest$dow <- as.character(day.of.week(mdy$month, mdy$day, mdy$year))
+
+xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
+
+
+# add combinations of character columns
+which_char <- colnames(xtrain)[which(sapply(xtrain, class) == "character")]
+xcomb <- combn(length(which_char),2)
+for (ff in 1:ncol(xcomb))
+{
+  i1 <- xcomb[1,ff]; i2 <- xcomb[2,ff]
+  xcol1 <- which_char[i1]; xcol2 <- which_char[i2]
+  xcol <- paste(xtrain[,xcol1], xtrain[,xcol2], sep = "")
+  xname <- paste(xcol1, xcol2, sep = "")
+  xtrain[,xname] <- xcol
+  xcol <- paste(xtest[,xcol1], xtest[,xcol2], sep = "")
+  xtest[,xname] <- xcol
+  msg(xname)
+  
+}
+
+xfold <- read_csv(file = "./input/xfolds.csv")
+idFix <- list()
+for (ii in 1:10)
+{
+  idFix[[ii]] <- which(xfold$fold5 == ii)
+}
+rm(xfold,ii)  
+
+
+# count number of distinct values
+nof_vals <- sapply(xtrain, function(s) nlevels(factor(s)))
+
+# grab factor variables
+factor_vars <- colnames(xtrain)[which( (nof_vals < 100) & (nof_vals > 1))]
+factor_vars <- setdiff(factor_vars, "QuoteConversion_Flag")
+
+# loop over factor variables, create a response rate version for each
+for (varname in factor_vars)
+{
+  # placeholder for the new variable values
+  x <- rep(NA, nrow(xtrain))
+  for (ii in seq(idFix))
+  {
+    # separate ~ fold
+    idx <- idFix[[ii]]
+    x0 <- xtrain[-idx, factor_vars]; x1 <- xtrain[idx, factor_vars]
+    y0 <- xtrain$QuoteConversion_Flag[-idx]; y1 <- xtrain$QuoteConversion_Flag[idx]
+    # take care of factor lvl mismatches
+    x0[,varname] <- factor(as.character(x0[,varname]))
+    # fit LMM model
+    myForm <- as.formula (paste ("y0 ~ (1|", varname, ")"))
+    myLME <- lmer (myForm, x0, REML=FALSE, verbose=F)
+    myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+    # table to match to the original
+    myLMERDF <- data.frame (levelName = as.character(levels(x0[,varname])), myDampVal = myRanEf+myFixEf)
+    rownames(myLMERDF) <- NULL
+    x[idx] <- myLMERDF[,2][match(xtrain[idx, varname], myLMERDF[,1])]
+    x[idx][is.na(x[idx])] <- mean(y0)
+  }
+  rm(x0,x1,y0,y1, myLME, myLMERDF, myFixEf, myRanEf)
+  # add the new variable
+  xtrain[,paste(varname, "dmp", sep = "")] <- x
+  
+  # create the same on test set
+  xtrain[,varname] <- factor(as.character(xtrain[,varname]))
+  y <- xtrain$QuoteConversion_Flag
+  x <- rep(NA, nrow(xtest))
+  # fit LMM model
+  myForm <- as.formula (paste ("y ~ (1|", varname, ")"))
+  myLME <- lmer (myForm, xtrain[,factor_vars], REML=FALSE, verbose=F)
+  myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+  # table to match to the original
+  myLMERDF <- data.frame (levelName = as.character(levels(xtrain[,varname])), myDampVal = myRanEf+myFixEf)
+  rownames(myLMERDF) <- NULL
+  x <- myLMERDF[,2][match(xtest[, varname], myLMERDF[,1])]
+  x[is.na(x)] <- mean(y)
+  xtest[,paste(varname, "dmp", sep = "")] <- x
+  msg(varname)
+}
+
+# drop the original factors
+for (xn in factor_vars)
+{
+  xtrain[,xn] <- NULL
+  xtest[,xn] <- NULL
+}
+
+# drop constant columns 
+xsd <- apply(xtrain,2,sd); xnames <- names(which(xsd == 0))
+for (xn in xnames)
+{
+  xtrain[,xn] <- NULL
+  xtest[,xn] <- NULL
+}
+# store the files
+write_csv(xtrain, path = "./input/xtrain_kb5.csv")
+write_csv(xtest, path = "./input/xtest_kb5.csv")
