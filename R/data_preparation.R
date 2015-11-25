@@ -121,18 +121,19 @@ BuildMP2 <- function() {
 ## MP set v2 ####
   # Same as V1 only adding tnse features to the mix.#
   
-  train = fread('input/xtrain_mp1.csv',header=TRUE,data.table=F)
-  test = fread('input/xtest_mp1.csv',header=TRUE,data.table = F)
+  train = fread('input/xtrain_mp1.csv', header=TRUE, data.table = F)
+  test = fread('input/xtest_mp1.csv', header=TRUE, data.table = F)
   submission = fread('input/sample_submission.csv')
   
-  train.Qnumber <- train[,1]
+  train.Qnumber <- as.data.frame(train[,1])
   setnames(train.Qnumber, 'QuoteNumber')
-  test.Qnumber <- test[,1]
+  test.Qnumber <- as.data.frame(test[,1])
   setnames(test.Qnumber, 'QuoteNumber')
+  
   train = train[,-1]
   test = test[,-1]
   
-  y = train[,ncol(train)]
+  y = as.data.frame(train[,ncol(train)])
   setnames(y, 'QuoteConversion_Flag')
   train = train[,-ncol(train)]
   
@@ -157,11 +158,11 @@ BuildMP2 <- function() {
   x = cbind(x, tsne$Y[,3])
   
   # Get index of train and test set to split when training
-  trind = 1:length(y)
+  trind = 1:dim(y)[1]
   teind = (nrow(train)+1):nrow(x)
   
-  trainX = as.data.table(x[trind,])
-  testX = as.data.table(x[teind,])
+  trainX = as.data.frame(x[trind,])
+  testX = as.data.frame(x[teind,])
   
   setnames(trainX, c(train.names, 'tnse1', 'tnse2', 'tnse3'))
   setnames(testX, c(test.names, 'tnse1', 'tnse2', 'tnse3'))
