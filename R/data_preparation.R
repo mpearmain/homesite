@@ -123,12 +123,14 @@ BuildMP2 <- function() {
   submission = fread('input/sample_submission.csv')
   
   train.Qnumber <- train[,1]
+  setnames(train.Qnumber, 'QuoteNumber')
   test.Qnumber <- test[,1]
-  
+  setnames(test.Qnumber, 'QuoteNumber')
   train = train[,-1]
   test = test[,-1]
   
   y = train[,ncol(train)]
+  setnames(y, 'QuoteConversion_Flag')
   train = train[,-ncol(train)]
   
   train.names <- names(train)
@@ -162,7 +164,9 @@ BuildMP2 <- function() {
   setnames(testX, c(test.names, 'tnse1', 'tnse2', 'tnse3'))
   
   trainX <- cbind(train.Qnumber, trainX)
+  trainX <- cbind(trainX, y)
   testX <- cbind(test.Qnumber, testX)
+  
   
   # Output tnse train and test files to save re-running.
   write.csv(trainX, 'input/xtrain_mp2.csv', row.names = F, quote = F)
