@@ -8,6 +8,7 @@ library(caret)
 library(stringr)
 library(readr)
 library(lubridate)
+library(Rtsne)
 require(lme4)
 require(chron)
 
@@ -21,96 +22,153 @@ msg <- function(mmm,...)
 }
 
 ## MP set v1 ####
-# Working Dir should be top level with folders ./R, ./input, ./output
-train <- fread('input/train.csv')
-test <- fread('input/test.csv')
-
-# Lets first align the datasets for equal vars to work with.
-y <- train[, QuoteConversion_Flag]
-train[, c('QuoteConversion_Flag') := NULL]
-train[, dset := 0]
-test[, dset := 1]
-
-#Quick check to align data dimensions.
-stopifnot(dim(test)[2] ==dim(train)[2])
-# Join the datasets for simple manipulations.
-bigD <- rbind(train, test)
-rm(list = c('train', 'test'))
-
-## Data Manipulations 
-# Lets solve the Field10 issue: 1,165 => 1165.
-bigD[, Field10 := as.numeric(gsub(",", "", Field10))]
-
-# First lets work with the dates and remove "Original_Quote_Date" field.
-bigD[, Date := parse_date_time(Original_Quote_Date, "%Y%m%d")]
-bigD[, Original_Quote_Date := NULL]
-
-# Lets get the year, month, day of month, weekday,
-bigD[, year := as.factor(year(Date))]
-bigD[, month := as.factor(month(Date))]
-bigD[, monthday := as.factor(mday(Date))]
-bigD[, weekday := as.factor(wday(Date))]
-# Adding year day - people rebuy the same year?
-bigD[, yearday := as.factor(yday(Date))]
-
-# Fake duration date - How long since the start of the comp (Mon 9 Nov 2015)
-# Taking logs as magnitude is an order difference 175 min 1042 max
-# Checking distributions between train and test proves equal distributions. --> Good to know for CV.
-bigD[, daysDurOrigQuote := as.integer(parse_date_time("2015-11-09", "%Y%m%d") - Date)]
-bigD[, logDaysDurOrigQuote := log(as.integer(parse_date_time("2015-11-09", "%Y%m%d") - Date))]
-bigD[, Date := NULL]
-
-# Lets model temporal effects in time
-# http://www.rochester.edu/College/PSC/signorino/research/Carter_Signorino_2010_PA.pdf
-# Needs more work for anything useful
-#bigD[, logdaysDurOrigQuote2 := log((daysDurOrigQuote)^2 - daysDurOrigQuote)]
-#bigD[, logdaysDurOrigQuote3 := log((daysDurOrigQuote)^3 - daysDurOrigQuote)]
-
-bigD[is.na(bigD)] <- -1
-
-# Count -1's across the data set
-bigD[, CoverageNeg1s := rowSums(.SD == -1), .SDcols = grep("CoverageField", names(bigD))]
-bigD[, SalesNeg1s := rowSums(.SD == -1), .SDcols = grep("SalesField", names(bigD))]
-bigD[, PropertyNeg1s := rowSums(.SD == -1), .SDcols = grep("PropertyField", names(bigD))]
-bigD[, GeoNeg1s := rowSums(.SD == -1), .SDcols = grep("GeographicField", names(bigD))]
-bigD[, PersonalNeg1s := rowSums(.SD == -1), .SDcols = grep("PersonalField", names(bigD))]
-# Finally Total across all.
-bigD[,
-     TotalNeg1s := rowSums(.SD),
-     .SDcols = c("CoverageNeg1s", "SalesNeg1s", "PropertyNeg1s", "GeoNeg1s", "PersonalNeg1s")]
-
-# plotting Sales field 
-
-
-# Catch factor columns
-fact_cols <- which(lapply(bigD, class) == "character")
-# Map all categoricals into numeric.
-cat("Assuming text variables are categorical & replacing them with numeric ids\n")
-for (f in colnames(bigD)) {
-  if (class(bigD[[f]])=="character") {
-    print(f)
-    levels <- unique(bigD[[f]])
-    bigD[[f]] <- as.integer(factor(bigD[[f]], levels=levels))
+BuildMP1 <- function() {
+  # Wrapping the builds in functions to make it easier to call just one Dataset Build.
+  # Working Dir should be top level with folders ./R, ./input, ./output
+  train <- fread('input/train.csv')
+  test <- fread('input/test.csv')
+  
+  # Lets first align the datasets for equal vars to work with.
+  y <- train[, QuoteConversion_Flag]
+  train[, c('QuoteConversion_Flag') := NULL]
+  train[, dset := 0]
+  test[, dset := 1]
+  
+  #Quick check to align data dimensions.
+  stopifnot(dim(test)[2] ==dim(train)[2])
+  # Join the datasets for simple manipulations.
+  bigD <- rbind(train, test)
+  rm(list = c('train', 'test'))
+  
+  ## Data Manipulations 
+  # Lets solve the Field10 issue: 1,165 => 1165.
+  bigD[, Field10 := as.numeric(gsub(",", "", Field10))]
+  
+  # First lets work with the dates and remove "Original_Quote_Date" field.
+  bigD[, Date := parse_date_time(Original_Quote_Date, "%Y%m%d")]
+  bigD[, Original_Quote_Date := NULL]
+  
+  # Lets get the year, month, day of month, weekday,
+  bigD[, year := as.factor(year(Date))]
+  bigD[, month := as.factor(month(Date))]
+  bigD[, monthday := as.factor(mday(Date))]
+  bigD[, weekday := as.factor(wday(Date))]
+  # Adding year day - people rebuy the same year?
+  bigD[, yearday := as.factor(yday(Date))]
+  
+  # Fake duration date - How long since the start of the comp (Mon 9 Nov 2015)
+  # Taking logs as magnitude is an order difference 175 min 1042 max
+  # Checking distributions between train and test proves equal distributions. --> Good to know for CV.
+  bigD[, daysDurOrigQuote := as.integer(parse_date_time("2015-11-09", "%Y%m%d") - Date)]
+  bigD[, logDaysDurOrigQuote := log(as.integer(parse_date_time("2015-11-09", "%Y%m%d") - Date))]
+  bigD[, Date := NULL]
+  
+  # Lets model temporal effects in time
+  # http://www.rochester.edu/College/PSC/signorino/research/Carter_Signorino_2010_PA.pdf
+  # Needs more work for anything useful
+  #bigD[, logdaysDurOrigQuote2 := log((daysDurOrigQuote)^2 - daysDurOrigQuote)]
+  #bigD[, logdaysDurOrigQuote3 := log((daysDurOrigQuote)^3 - daysDurOrigQuote)]
+  
+  bigD[is.na(bigD)] <- -1
+  
+  # Count -1's across the data set
+  bigD[, CoverageNeg1s := rowSums(.SD == -1), .SDcols = grep("CoverageField", names(bigD))]
+  bigD[, SalesNeg1s := rowSums(.SD == -1), .SDcols = grep("SalesField", names(bigD))]
+  bigD[, PropertyNeg1s := rowSums(.SD == -1), .SDcols = grep("PropertyField", names(bigD))]
+  bigD[, GeoNeg1s := rowSums(.SD == -1), .SDcols = grep("GeographicField", names(bigD))]
+  bigD[, PersonalNeg1s := rowSums(.SD == -1), .SDcols = grep("PersonalField", names(bigD))]
+  # Finally Total across all.
+  bigD[,
+       TotalNeg1s := rowSums(.SD),
+       .SDcols = c("CoverageNeg1s", "SalesNeg1s", "PropertyNeg1s", "GeoNeg1s", "PersonalNeg1s")]
+  
+  
+  # Catch factor columns
+  fact_cols <- which(lapply(bigD, class) == "character")
+  # Map all categoricals into numeric.
+  cat("Assuming text variables are categorical & replacing them with numeric ids\n")
+  for (f in colnames(bigD)) {
+    if (class(bigD[[f]])=="character") {
+      print(f)
+      levels <- unique(bigD[[f]])
+      bigD[[f]] <- as.integer(factor(bigD[[f]], levels=levels))
+    }
   }
+  
+  ## Split files & Export 
+  xtrain <- bigD[dset == 0, ]
+  xtest <- bigD[dset == 1, ]
+  rm(bigD)
+  
+  xtrain[, dset := NULL]
+  xtest[, dset := NULL]
+  
+  xtrain[, QuoteConversion_Flag := y]
+  
+  write.csv(xtrain, 'input/xtrain_mp1.csv', row.names = F)
+  write.csv(xtest, 'input/xtest_mp1.csv', row.names = F)
+  
+  rm(xtrain)
+  rm(xtest)
+  return(cat("MP1 dataset built"))
 }
 
-# Next big step is to make binary values of the factor cols, and response rates
-# for the factor cols.
 
-
-## Split files & Export 
-xtrain <- bigD[dset == 0, ]
-xtest <- bigD[dset == 1, ]
-rm(bigD)
-
-xtrain[, dset := NULL]
-xtest[, dset := NULL]
-
-xtrain[, QuoteConversion_Flag := y]
-
-
-write.csv(xtrain, 'input/xtrain_mp1.csv', row.names = F)
-write.csv(xtest, 'input/xtest_mp1.csv', row.names = F)
+BuildMP2 <- function() {
+  ## MP set v2 ####
+  # Same as V1 only adding tnse features to the mix.#
+  
+  train = fread('input/xtrain_mp1.csv',header=TRUE,data.table=F)
+  test = fread('input/xtest_mp1.csv',header=TRUE,data.table = F)
+  submission = fread('input/sample_submission.csv')
+  
+  train.names <- names(train)
+  test.names <- names(test)
+  
+  train.Qnumber <- train[,1]
+  test.Qnumber <- test[,1]
+  
+  train = train[,-1]
+  test = test[,-1]
+  
+  y = train[,ncol(train)]
+  
+  x = rbind(train[,-ncol(train)],test)
+  x = as.matrix(x)
+  x = matrix(as.numeric(x),nrow(x),ncol(x))
+  
+  # Running this takes a LONG time. -> Need min 16GB RAM spare
+  tsne <- Rtsne(as.matrix(x), 
+                check_duplicates = FALSE, 
+                pca = TRUE, 
+                perplexity=30, 
+                theta=0.5, 
+                dims=3)
+  
+  # Add to the mix of features -> cbind because its a matrix
+  x = cbind(x, tsne$Y[,1]) 
+  x = cbind(x, tsne$Y[,2])
+  
+  # Get index of train and test set to split when training
+  trind = 1:length(y)
+  teind = (nrow(train)+1):nrow(x)
+  
+  trainX = as.data.table(x[trind,])
+  testX = as.data.table(x[teind,])
+  
+  setnames(trainX, train.names)
+  setnames(testX, test.names)
+  
+  trainX <- cbind(train.Qnumber, trainX)
+  testX <- cbind(test.Qnumber, testX)
+  
+  # Output tnse train and test files to save re-running.
+  write.csv(trainX, 'input/xtrain_mp2.csv', row.names = F, quote = F)
+  write.csv(testX, 'input/xtest_mp2.csv', row.names = F, quote = F)
+  
+  rm(list=c(teind, trind, testX, train.Qnumber, test.Qnumber, trainX, x, y, tsne))
+  return(cat("MP2 dataset built"))
+}
 
 ## KB set v1 ####
 # map everything to integers
