@@ -122,9 +122,6 @@ BuildMP2 <- function() {
   test = fread('input/xtest_mp1.csv',header=TRUE,data.table = F)
   submission = fread('input/sample_submission.csv')
   
-  train.names <- names(train)
-  test.names <- names(test)
-  
   train.Qnumber <- train[,1]
   test.Qnumber <- test[,1]
   
@@ -132,15 +129,19 @@ BuildMP2 <- function() {
   test = test[,-1]
   
   y = train[,ncol(train)]
+  train = train[,-ncol(train)]
   
-  x = rbind(train[,-ncol(train)],test)
+  train.names <- names(train)
+  test.names <- names(test)
+  
+  x = rbind(train,test)
   x = as.matrix(x)
   x = matrix(as.numeric(x),nrow(x),ncol(x))
   
   # Running this takes a LONG time. -> Need min 16GB RAM spare
   tsne <- Rtsne(as.matrix(x), 
                 check_duplicates = FALSE, 
-                pca = TRUE, 
+                pca = FALSE, 
                 perplexity=30, 
                 theta=0.5, 
                 dims=3)
@@ -148,6 +149,7 @@ BuildMP2 <- function() {
   # Add to the mix of features -> cbind because its a matrix
   x = cbind(x, tsne$Y[,1]) 
   x = cbind(x, tsne$Y[,2])
+  x = cbind(x, tsne$Y[,3])
   
   # Get index of train and test set to split when training
   trind = 1:length(y)
@@ -156,8 +158,8 @@ BuildMP2 <- function() {
   trainX = as.data.table(x[trind,])
   testX = as.data.table(x[teind,])
   
-  setnames(trainX, train.names)
-  setnames(testX, test.names)
+  setnames(trainX, c(train.names, 'tnse1', 'tnse2', 'tnse3'))
+  setnames(testX, c(test.names, 'tnse1', 'tnse2', 'tnse3'))
   
   trainX <- cbind(train.Qnumber, trainX)
   testX <- cbind(test.Qnumber, testX)
