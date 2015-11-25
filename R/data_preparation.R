@@ -179,6 +179,9 @@ BuildMP2 <- function() {
   return(cat("MP2 dataset built"))
 }
 
+BuildMP2()
+
+
 ## KB set v1 ####
 # map everything to integers
 # read
