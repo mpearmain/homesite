@@ -114,10 +114,10 @@ BuildMP1 <- function() {
   return(cat("MP1 dataset built"))
 }
 
+BuildMP1()
+
 
 BuildMP2 <- function() {
-  
-
 ## MP set v2 ####
   # Same as V1 only adding tnse features to the mix.#
   
@@ -150,12 +150,11 @@ BuildMP2 <- function() {
                 pca = FALSE, 
                 perplexity=30, 
                 theta=0.5, 
-                dims=3)
+                dims=2)
   
   # Add to the mix of features -> cbind because its a matrix
   x = cbind(x, tsne$Y[,1]) 
   x = cbind(x, tsne$Y[,2])
-  x = cbind(x, tsne$Y[,3])
   
   # Get index of train and test set to split when training
   trind = 1:dim(y)[1]
@@ -164,8 +163,8 @@ BuildMP2 <- function() {
   trainX = as.data.frame(x[trind,])
   testX = as.data.frame(x[teind,])
   
-  setnames(trainX, c(train.names, 'tnse1', 'tnse2', 'tnse3'))
-  setnames(testX, c(test.names, 'tnse1', 'tnse2', 'tnse3'))
+  setnames(trainX, c(train.names, 'tnse1', 'tnse2'))
+  setnames(testX, c(test.names, 'tnse1', 'tnse2'))
   
   trainX <- cbind(train.Qnumber, trainX)
   trainX <- cbind(trainX, y)
