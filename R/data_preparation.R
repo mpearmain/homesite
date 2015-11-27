@@ -116,11 +116,9 @@ BuildMP1 <- function() {
 
 BuildMP1()
 
-
-BuildMP2 <- function() {
-
 ## MP set v2 ####
   # Same as V1 only adding tnse features to the mix.#
+BuildMP2 <- function() {
   
   train = fread('input/xtrain_mp1.csv', header=TRUE, data.table = F)
   test = fread('input/xtest_mp1.csv', header=TRUE, data.table = F)
