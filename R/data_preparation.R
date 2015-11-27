@@ -114,24 +114,27 @@ BuildMP1 <- function() {
   return(cat("MP1 dataset built"))
 }
 
+BuildMP1()
+
 
 BuildMP2 <- function() {
-  
-
 ## MP set v2 ####
   # Same as V1 only adding tnse features to the mix.#
   
-  train = fread('input/xtrain_mp1.csv',header=TRUE,data.table=F)
-  test = fread('input/xtest_mp1.csv',header=TRUE,data.table = F)
+  train = fread('input/xtrain_mp1.csv', header=TRUE, data.table = F)
+  test = fread('input/xtest_mp1.csv', header=TRUE, data.table = F)
   submission = fread('input/sample_submission.csv')
   
-  train.Qnumber <- train[,1]
-  test.Qnumber <- test[,1]
+  train.Qnumber <- as.data.frame(train[,1])
+  setnames(train.Qnumber, 'QuoteNumber')
+  test.Qnumber <- as.data.frame(test[,1])
+  setnames(test.Qnumber, 'QuoteNumber')
   
   train = train[,-1]
   test = test[,-1]
   
-  y = train[,ncol(train)]
+  y = as.data.frame(train[,ncol(train)])
+  setnames(y, 'QuoteConversion_Flag')
   train = train[,-ncol(train)]
   
   train.names <- names(train)
@@ -147,25 +150,26 @@ BuildMP2 <- function() {
                 pca = FALSE, 
                 perplexity=30, 
                 theta=0.5, 
-                dims=3)
+                dims=2)
   
   # Add to the mix of features -> cbind because its a matrix
   x = cbind(x, tsne$Y[,1]) 
   x = cbind(x, tsne$Y[,2])
-  x = cbind(x, tsne$Y[,3])
   
   # Get index of train and test set to split when training
-  trind = 1:length(y)
+  trind = 1:dim(y)[1]
   teind = (nrow(train)+1):nrow(x)
   
-  trainX = as.data.table(x[trind,])
-  testX = as.data.table(x[teind,])
+  trainX = as.data.frame(x[trind,])
+  testX = as.data.frame(x[teind,])
   
-  setnames(trainX, c(train.names, 'tnse1', 'tnse2', 'tnse3'))
-  setnames(testX, c(test.names, 'tnse1', 'tnse2', 'tnse3'))
+  setnames(trainX, c(train.names, 'tnse1', 'tnse2'))
+  setnames(testX, c(test.names, 'tnse1', 'tnse2'))
   
   trainX <- cbind(train.Qnumber, trainX)
+  trainX <- cbind(trainX, y)
   testX <- cbind(test.Qnumber, testX)
+  
   
   # Output tnse train and test files to save re-running.
   write.csv(trainX, 'input/xtrain_mp2.csv', row.names = F, quote = F)
@@ -174,6 +178,9 @@ BuildMP2 <- function() {
   rm(list=c(teind, trind, testX, train.Qnumber, test.Qnumber, trainX, x, y, tsne))
   return(cat("MP2 dataset built"))
 }
+
+BuildMP2()
+
 
 ## KB set v1 ####
 # map everything to integers

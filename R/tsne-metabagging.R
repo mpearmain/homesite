@@ -22,10 +22,6 @@ y = train[,ncol(train)]
 train[,-ncol(train)]
 ##################################### Meta-Bagging models ####################################
 
-pred = matrix(pred,9,length(pred)/9)
-pred = t(pred)
-
-
 tmpC = 1:240
 tmpL = length(trind)
 gtree = 200
