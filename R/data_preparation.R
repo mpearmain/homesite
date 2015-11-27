@@ -489,7 +489,7 @@ xfold <- read_csv(file = "./input/xfolds.csv")
 idFix <- list()
 for (ii in 1:10)
 {
-  idFix[[ii]] <- which(xfold$fold5 == ii)
+  idFix[[ii]] <- which(xfold$fold10 == ii)
 }
 rm(xfold,ii)  
 
@@ -559,6 +559,66 @@ for (xn in xnames)
   xtrain[,xn] <- NULL
   xtest[,xn] <- NULL
 }
+
+# quick fix re-run: take care of the factors missed the first 
+# time around due to larger number of unique values
+factor_vars <- names(which(sapply(xtrain, class) == "character"))
+# loop over factor variables, create a response rate version for each
+for (varname in factor_vars)
+{
+  # placeholder for the new variable values
+  x <- rep(NA, nrow(xtrain))
+  for (ii in seq(idFix))
+  {
+    # separate ~ fold
+    idx <- idFix[[ii]]
+    x0 <- xtrain[-idx, factor_vars]; x1 <- xtrain[idx, factor_vars]
+    y0 <- xtrain$QuoteConversion_Flag[-idx]; y1 <- xtrain$QuoteConversion_Flag[idx]
+    # take care of factor lvl mismatches
+    x0[,varname] <- factor(as.character(x0[,varname]))
+    # fit LMM model
+    myForm <- as.formula (paste ("y0 ~ (1|", varname, ")"))
+    myLME <- lmer (myForm, x0, REML=FALSE, verbose=F)
+    myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+    # table to match to the original
+    myLMERDF <- data.frame (levelName = as.character(levels(x0[,varname])), myDampVal = myRanEf+myFixEf)
+    rownames(myLMERDF) <- NULL
+    x[idx] <- myLMERDF[,2][match(xtrain[idx, varname], myLMERDF[,1])]
+    x[idx][is.na(x[idx])] <- mean(y0)
+  }
+  rm(x0,x1,y0,y1, myLME, myLMERDF, myFixEf, myRanEf)
+  # add the new variable
+  xtrain[,paste(varname, "dmp", sep = "")] <- x
+  
+  # create the same on test set
+  xtrain[,varname] <- factor(as.character(xtrain[,varname]))
+  y <- xtrain$QuoteConversion_Flag
+  x <- rep(NA, nrow(xtest))
+  # fit LMM model
+  myForm <- as.formula (paste ("y ~ (1|", varname, ")"))
+  myLME <- lmer (myForm, xtrain[,factor_vars], REML=FALSE, verbose=F)
+  myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+  # table to match to the original
+  myLMERDF <- data.frame (levelName = as.character(levels(xtrain[,varname])), myDampVal = myRanEf+myFixEf)
+  rownames(myLMERDF) <- NULL
+  x <- myLMERDF[,2][match(xtest[, varname], myLMERDF[,1])]
+  x[is.na(x)] <- mean(y)
+  xtest[,paste(varname, "dmp", sep = "")] <- x
+  
+  # clean up 
+  # xtrain[,varname] <- NULL;   xtest[,varname] <- NULL
+  msg(varname)
+}
+
+# clean up 
+for (xn in factor_vars)
+{
+  xtrain[,xn] <- NULL
+  xtest[,xn] <- NULL
+}
+
+xtrain$Field6PersonalField16 <- xtest$Field6PersonalField16 <- NULL
+
 # store the files
 write_csv(xtrain, path = "./input/xtrain_kb5.csv")
 write_csv(xtest, path = "./input/xtest_kb5.csv")
