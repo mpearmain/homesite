@@ -627,3 +627,85 @@ xtrain$Field6PersonalField16 <- xtest$Field6PersonalField16 <- NULL
 # store the files
 write_csv(xtrain, path = "./input/xtrain_kb5.csv")
 write_csv(xtest, path = "./input/xtest_kb5.csv")
+
+## KB set v6 ####
+# kmeans based on v4 
+xtrain <- read_csv("./input/xtrain_kb4.csv")
+xtest <- read_csv("./input/xtest_kb4.csv")
+
+## create kmeans-based dataset 
+xfolds <- read_csv("./input/xfolds.csv")
+isValid <- which(xfolds$valid == 1)
+y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
+xtrain$SalesField8 <- xtest$SalesField8 <- NULL
+train_QuoteNumber <- xtrain$QuoteNumber
+test_QuoteNumber <- xtest$QuoteNumber
+xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
+
+
+# map to distances from kmeans clusters
+nof_centers <- 50
+km0 <- kmeans(xtrain, centers = nof_centers)
+dist1 <- array(0, c(nrow(xtrain), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist1[,ii] <- apply(xtrain,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+dist2 <- array(0, c(nrow(xtest), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist2[,ii] <- apply(xtest,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+
+# storage
+dist1 <- data.frame(dist1)
+dist2 <- data.frame(dist2)
+dist1$QuoteConversion_Flag <- factor(y)
+dist1$QuoteNumber <- train_QuoteNumber
+dist2$QuoteNumber <- test_QuoteNumber
+
+write_csv(dist1, "./input/xtrain_kb6.csv")
+write_csv(dist2, "./input/xtest_kb6.csv")
+
+## KB set v7 ####
+# kmeans based on v5 
+xtrain <- read_csv("./input/xtrain_kb5.csv")
+xtest <- read_csv("./input/xtest_kb5.csv")
+
+## create kmeans-based dataset ####
+xfolds <- read_csv("./input/xfolds.csv")
+isValid <- which(xfolds$valid == 1)
+y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
+xtrain$SalesField8 <- xtest$SalesField8 <- NULL
+train_QuoteNumber <- xtrain$QuoteNumber
+test_QuoteNumber <- xtest$QuoteNumber
+xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
+
+
+# map to distances from kmeans clusters
+nof_centers <- 100
+km0 <- kmeans(xtrain, centers = nof_centers)
+dist1 <- array(0, c(nrow(xtrain), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist1[,ii] <- apply(xtrain,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+dist2 <- array(0, c(nrow(xtest), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist2[,ii] <- apply(xtest,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+
+# storage
+dist1 <- data.frame(dist1)
+dist2 <- data.frame(dist2)
+dist1$QuoteConversion_Flag <- factor(y)
+dist1$QuoteNumber <- train_QuoteNumber
+dist2$QuoteNumber <- test_QuoteNumber
+
+write_csv(dist1, "./input/xtrain_kb7.csv")
+write_csv(dist2, "./input/xtest_kb7.csv")
