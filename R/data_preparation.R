@@ -114,12 +114,11 @@ BuildMP1 <- function() {
   return(cat("MP1 dataset built"))
 }
 
-
-BuildMP2 <- function() {
-  
+BuildMP1()
 
 ## MP set v2 ####
   # Same as V1 only adding tnse features to the mix.#
+BuildMP2 <- function() {
   
   train = fread('input/xtrain_mp1.csv', header=TRUE, data.table = F)
   test = fread('input/xtest_mp1.csv', header=TRUE, data.table = F)
@@ -150,12 +149,11 @@ BuildMP2 <- function() {
                 pca = FALSE, 
                 perplexity=30, 
                 theta=0.5, 
-                dims=3)
+                dims=2)
   
   # Add to the mix of features -> cbind because its a matrix
   x = cbind(x, tsne$Y[,1]) 
   x = cbind(x, tsne$Y[,2])
-  x = cbind(x, tsne$Y[,3])
   
   # Get index of train and test set to split when training
   trind = 1:dim(y)[1]
@@ -164,8 +162,8 @@ BuildMP2 <- function() {
   trainX = as.data.frame(x[trind,])
   testX = as.data.frame(x[teind,])
   
-  setnames(trainX, c(train.names, 'tnse1', 'tnse2', 'tnse3'))
-  setnames(testX, c(test.names, 'tnse1', 'tnse2', 'tnse3'))
+  setnames(trainX, c(train.names, 'tnse1', 'tnse2'))
+  setnames(testX, c(test.names, 'tnse1', 'tnse2'))
   
   trainX <- cbind(train.Qnumber, trainX)
   trainX <- cbind(trainX, y)
@@ -181,7 +179,6 @@ BuildMP2 <- function() {
 }
 
 BuildMP2()
-
 
 ## KB set v1 ####
 # map everything to integers
@@ -497,7 +494,7 @@ xfold <- read_csv(file = "./input/xfolds.csv")
 idFix <- list()
 for (ii in 1:10)
 {
-  idFix[[ii]] <- which(xfold$fold5 == ii)
+  idFix[[ii]] <- which(xfold$fold10 == ii)
 }
 rm(xfold,ii)  
 
@@ -567,6 +564,148 @@ for (xn in xnames)
   xtrain[,xn] <- NULL
   xtest[,xn] <- NULL
 }
+
+# quick fix re-run: take care of the factors missed the first 
+# time around due to larger number of unique values
+factor_vars <- names(which(sapply(xtrain, class) == "character"))
+# loop over factor variables, create a response rate version for each
+for (varname in factor_vars)
+{
+  # placeholder for the new variable values
+  x <- rep(NA, nrow(xtrain))
+  for (ii in seq(idFix))
+  {
+    # separate ~ fold
+    idx <- idFix[[ii]]
+    x0 <- xtrain[-idx, factor_vars]; x1 <- xtrain[idx, factor_vars]
+    y0 <- xtrain$QuoteConversion_Flag[-idx]; y1 <- xtrain$QuoteConversion_Flag[idx]
+    # take care of factor lvl mismatches
+    x0[,varname] <- factor(as.character(x0[,varname]))
+    # fit LMM model
+    myForm <- as.formula (paste ("y0 ~ (1|", varname, ")"))
+    myLME <- lmer (myForm, x0, REML=FALSE, verbose=F)
+    myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+    # table to match to the original
+    myLMERDF <- data.frame (levelName = as.character(levels(x0[,varname])), myDampVal = myRanEf+myFixEf)
+    rownames(myLMERDF) <- NULL
+    x[idx] <- myLMERDF[,2][match(xtrain[idx, varname], myLMERDF[,1])]
+    x[idx][is.na(x[idx])] <- mean(y0)
+  }
+  rm(x0,x1,y0,y1, myLME, myLMERDF, myFixEf, myRanEf)
+  # add the new variable
+  xtrain[,paste(varname, "dmp", sep = "")] <- x
+  
+  # create the same on test set
+  xtrain[,varname] <- factor(as.character(xtrain[,varname]))
+  y <- xtrain$QuoteConversion_Flag
+  x <- rep(NA, nrow(xtest))
+  # fit LMM model
+  myForm <- as.formula (paste ("y ~ (1|", varname, ")"))
+  myLME <- lmer (myForm, xtrain[,factor_vars], REML=FALSE, verbose=F)
+  myFixEf <- fixef (myLME); myRanEf <- unlist (ranef (myLME))
+  # table to match to the original
+  myLMERDF <- data.frame (levelName = as.character(levels(xtrain[,varname])), myDampVal = myRanEf+myFixEf)
+  rownames(myLMERDF) <- NULL
+  x <- myLMERDF[,2][match(xtest[, varname], myLMERDF[,1])]
+  x[is.na(x)] <- mean(y)
+  xtest[,paste(varname, "dmp", sep = "")] <- x
+  
+  # clean up 
+  # xtrain[,varname] <- NULL;   xtest[,varname] <- NULL
+  msg(varname)
+}
+
+# clean up 
+for (xn in factor_vars)
+{
+  xtrain[,xn] <- NULL
+  xtest[,xn] <- NULL
+}
+
+xtrain$Field6PersonalField16 <- xtest$Field6PersonalField16 <- NULL
+
 # store the files
 write_csv(xtrain, path = "./input/xtrain_kb5.csv")
 write_csv(xtest, path = "./input/xtest_kb5.csv")
+
+## KB set v6 ####
+# kmeans based on v4 
+xtrain <- read_csv("./input/xtrain_kb4.csv")
+xtest <- read_csv("./input/xtest_kb4.csv")
+
+## create kmeans-based dataset 
+xfolds <- read_csv("./input/xfolds.csv")
+isValid <- which(xfolds$valid == 1)
+y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
+xtrain$SalesField8 <- xtest$SalesField8 <- NULL
+train_QuoteNumber <- xtrain$QuoteNumber
+test_QuoteNumber <- xtest$QuoteNumber
+xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
+
+
+# map to distances from kmeans clusters
+nof_centers <- 50
+km0 <- kmeans(xtrain, centers = nof_centers)
+dist1 <- array(0, c(nrow(xtrain), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist1[,ii] <- apply(xtrain,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+dist2 <- array(0, c(nrow(xtest), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist2[,ii] <- apply(xtest,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+
+# storage
+dist1 <- data.frame(dist1)
+dist2 <- data.frame(dist2)
+dist1$QuoteConversion_Flag <- factor(y)
+dist1$QuoteNumber <- train_QuoteNumber
+dist2$QuoteNumber <- test_QuoteNumber
+
+write_csv(dist1, "./input/xtrain_kb6.csv")
+write_csv(dist2, "./input/xtest_kb6.csv")
+
+## KB set v7 ####
+# kmeans based on v5 
+xtrain <- read_csv("./input/xtrain_kb5.csv")
+xtest <- read_csv("./input/xtest_kb5.csv")
+
+## create kmeans-based dataset ####
+xfolds <- read_csv("./input/xfolds.csv")
+isValid <- which(xfolds$valid == 1)
+y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
+xtrain$SalesField8 <- xtest$SalesField8 <- NULL
+train_QuoteNumber <- xtrain$QuoteNumber
+test_QuoteNumber <- xtest$QuoteNumber
+xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
+
+
+# map to distances from kmeans clusters
+nof_centers <- 100
+km0 <- kmeans(xtrain, centers = nof_centers)
+dist1 <- array(0, c(nrow(xtrain), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist1[,ii] <- apply(xtrain,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+dist2 <- array(0, c(nrow(xtest), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist2[,ii] <- apply(xtest,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+
+# storage
+dist1 <- data.frame(dist1)
+dist2 <- data.frame(dist2)
+dist1$QuoteConversion_Flag <- factor(y)
+dist1$QuoteNumber <- train_QuoteNumber
+dist2$QuoteNumber <- test_QuoteNumber
+
+write_csv(dist1, "./input/xtrain_kb7.csv")
+write_csv(dist2, "./input/xtest_kb7.csv")
