@@ -33,6 +33,8 @@ for k in range(no_bags):
                             seed=k*100+22)
     xgb_model = clf.fit(x_train, y_train, eval_metric="auc")
     preds = clf.predict_proba(test)[:,1]
+
+
     if type(pred_average) == bool:
         pred_average = preds.copy()/no_bags
     else:

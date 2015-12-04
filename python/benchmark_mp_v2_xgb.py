@@ -23,13 +23,13 @@ pred_average = True
 no_bags = 10
 for k in range(no_bags):
     print 'Building bag:', k
-    clf = xgb.XGBClassifier(n_estimators=1900,
+    clf = xgb.XGBClassifier(n_estimators=1800,
                             nthread=-1,
-                            max_depth=7,
-                            learning_rate=0.02,
+                            max_depth=6,
+                            learning_rate=0.023,
                             silent=True,
-                            subsample=0.86,
-                            colsample_bytree=0.68,
+                            subsample=0.83,
+                            colsample_bytree=0.77,
                             seed=k*100+22)
     xgb_model = clf.fit(x_train, y_train, eval_metric="auc")
     preds = clf.predict_proba(test)[:,1]
@@ -39,4 +39,4 @@ for k in range(no_bags):
         pred_average += preds/no_bags
 
 sample.QuoteConversion_Flag = pred_average
-sample.to_csv('output/xgb_homesite_10bag_mp1_22112015.csv', index=False)
+sample.to_csv('output/xgb_homesite_10bag_mp1_06122015.csv', index=False)

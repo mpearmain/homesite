@@ -5,10 +5,6 @@ import xgboost as xgb
 from sklearn.metrics import roc_auc_score as auc
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-
 
 # Got a little bored so decided to just build a loop over a whole bunch of classifiers
 # add them back and then through in xgb for final ensemble.
@@ -56,15 +52,13 @@ print 'Done...'
 test = test.drop('QuoteNumber', axis=1)
 
 seed = 260681
-names = ["Random Forest", "Extra Trees", "Decision Tree", "Logistic Regression", "Naive Bayes", "Linear SVM", "RBF SVM"]
-col_names =["predRF", "predET", "predDT", "predLR", "predNB", "predSVM", "predRBF"]
-classifiers = [RandomForestClassifier(max_depth=10, n_estimators=500, n_jobs=-1, random_state=seed),
-               ExtraTreesClassifier(max_depth=10, n_estimators=500, n_jobs=-1, random_state=seed),
-               DecisionTreeClassifier(max_depth=7, random_state=seed),
+names = ["Random Forest", "Extra Trees", "Decision Tree", "Logistic Regression", "Naive Bayes"]
+col_names =["predRF", "predET", "predDT", "predLR", "predNB"]
+classifiers = [RandomForestClassifier(max_depth=44, n_estimators=750, n_jobs=-1, random_state=seed),
+               ExtraTreesClassifier(max_depth=34, n_estimators=1200, n_jobs=-1, random_state=seed),
+               DecisionTreeClassifier(),
                LogisticRegression(random_state=seed),
-               GaussianNB(),
-               SVC(kernel="linear", C=0.025, probability=True,cache_size=2000),
-               SVC(gamma=2, C=1, probability=True,cache_size=2000)]
+               GaussianNB()]
 
 # Now the fun part, build 'weak' classifiers on the above models - easy to add more
 # check the AUC on the validation set
@@ -80,6 +74,10 @@ for name, col_name, clf in zip(names, col_names, classifiers):
     xgb_train[col_name] = clf.predict_proba(xgb_train[meta_names])[:,1]
     test[col_name] = clf.predict_proba(test[meta_names])[:,1]
     print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
+
+# Create a single response of geometric mean of the predictors and remove the individual prediction.
+
+
 
 pred_average = True
 no_bags = 3
