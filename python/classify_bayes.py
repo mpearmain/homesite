@@ -90,31 +90,33 @@ if __name__ == "__main__":
 
 
             print 'Running Random Forest Optimization'
-            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(800), int(1300)),
+            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(80), int(130)),
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.1, 1)})
             print('-'*53)
-            rfcBO.maximize(restarts=150, n_iter=15)
+            rfcBO.maximize(restarts=150, n_iter=5)
             print('RFC: %f' % rfcBO.res['max']['max_val'])
 
             print 'Running Extra Trees Optimization'
-            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(800), int(1500)),
+            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(80), int(150)),
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.1, 1)})
             print('-'*53)
-            etcBO.maximize(restarts=150, n_iter=15)
+            etcBO.maximize(restarts=150, n_iter=5)
             print('RFC: %f' % etcBO.res['max']['max_val'])
 
             ##################################################################################################
             #
             # Now predict on valid and Test
             names = ["Random Forest", "ExtraTrees", "DecisionTree", "LogisticRegression", "Naive Bayes", 'XGBoost']
-            classifiers = [RFC(max_depth=int(rfcBO.res['max']['max_params']['max_depth']),
-                               n_estimators=int(rfcBO.res['max']['max_params']['n_estimators']),
+            classifiers = [RFC(n_estimators=int(rfcBO.res['max']['max_params']['n_estimators']),
+                               min_samples_split=int(rfcBO.res['max']['max_params']['min_samples_split']),
+                               max_features=rfcBO.res['max']['max_params']['max_features'],
                                n_jobs=-1,
                                random_state=seed),
-                           ETC(max_depth=int(etcBO.res['max']['max_params']['max_depth']),
-                               n_estimators=int(etcBO.res['max']['max_params']['n_estimators']),
+                           ETC(n_estimators=int(etcBO.res['max']['max_params']['n_estimators']),
+                               min_samples_split=int(etcBO.res['max']['max_params']['min_samples_split']),
+                               max_features=etcBO.res['max']['max_params']['max_features'],
                                n_jobs=-1,
                                random_state=seed),
                            DTC(random_state=seed),
@@ -126,7 +128,8 @@ if __name__ == "__main__":
                                              learning_rate=0.03,
                                              silent=True,
                                              subsample=0.8,
-                                             colsample_bytree=0.85)]
+                                             colsample_bytree=0.85,
+                                             seed=seed)]
 
 
             # iterate over classifiers to generate predictions..
@@ -139,6 +142,7 @@ if __name__ == "__main__":
                 # Predict values for validation check
                 print 'Writing Validation submission file...'
                 pred_valid = clf.predict_proba(valid_train)[:,1]
+                print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
                 d = {'QuoteNumber': valid_quoteNum, 'QuoteConversion_Flag': pred_valid}
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i] + '_' + str(seed) + '.csv'
