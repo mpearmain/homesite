@@ -15,6 +15,7 @@ __author__ = 'michael.pearmain'
 
 '''
 import pandas as pd
+import xgboost as xgb
 from sklearn.metrics import roc_auc_score as auc
 from sklearn.ensemble import RandomForestClassifier as RFC
 from sklearn.ensemble import ExtraTreesClassifier as ETC
@@ -107,8 +108,7 @@ if __name__ == "__main__":
             ##################################################################################################
             #
             # Now predict on valid and Test
-            names = ["Random Forest", "Extra Trees", "Decision Tree", "Logistic Regression", "Naive Bayes"]
-            col_names =["predRF", "predET", "predDT", "predLR", "predNB"]
+            names = ["Random Forest", "ExtraTrees", "DecisionTree", "LogisticRegression", "Naive Bayes", 'XGBoost']
             classifiers = [RFC(max_depth=int(rfcBO.res['max']['max_params']['max_depth']),
                                n_estimators=int(rfcBO.res['max']['max_params']['n_estimators']),
                                n_jobs=-1,
@@ -119,13 +119,23 @@ if __name__ == "__main__":
                                random_state=seed),
                            DTC(random_state=seed),
                            LogisticRegression(random_state=seed),
-                           GaussianNB()]
+                           GaussianNB(),
+                           xgb.XGBClassifier(n_estimators=900,
+                                             nthread=-1,
+                                             max_depth=8,
+                                             learning_rate=0.03,
+                                             silent=True,
+                                             subsample=0.8,
+                                             colsample_bytree=0.85)]
 
 
             # iterate over classifiers to generate predictions..
-            for name, col_name, clf in zip(names, col_names, classifiers):
+            for name, clf in zip(names, classifiers):
                 print 'Building', name, 'model'
-                clf.fit(meta_train, meta_y)
+                if name == 'XGBoost':
+                    clf.fit(meta_train, meta_y, eval_metric="auc")
+                if name != 'XGBoost':
+                    clf.fit(meta_train, meta_y)
                 # Predict values for validation check
                 print 'Writing Validation submission file...'
                 pred_valid = clf.predict_proba(valid_train)[:,1]
