@@ -69,6 +69,7 @@ if __name__ == "__main__":
             x_train = pd.read_csv(DATASETS_TRAIN[i])
             print 'Loading', DATASETS_TEST[i], 'data set'
             test = pd.read_csv(DATASETS_TEST[i])
+            test = test.drop('QuoteNumber', axis=1)
 
             # Make sure final set has no na's (should be solved in data_preparation.R)
             x_train = x_train.fillna(-1)
@@ -90,19 +91,19 @@ if __name__ == "__main__":
 
 
             print 'Running Random Forest Optimization'
-            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(80), int(130)),
+            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.1, 1)})
             print('-'*53)
-            rfcBO.maximize(init_points=1, restarts=150, n_iter=1)
+            rfcBO.maximize(init_points=10, restarts=150, n_iter=10)
             print('RFC: %f' % rfcBO.res['max']['max_val'])
 
             print 'Running Extra Trees Optimization'
-            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(80), int(150)),
+            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.1, 1)})
             print('-'*53)
-            etcBO.maximize(init_points=1, restarts=150, n_iter=1)
+            etcBO.maximize(init_points=10, restarts=150, n_iter=10)
             print('RFC: %f' % etcBO.res['max']['max_val'])
 
             ##################################################################################################
@@ -119,7 +120,7 @@ if __name__ == "__main__":
                                max_features=etcBO.res['max']['max_params']['max_features'],
                                n_jobs=-1,
                                random_state=seed),
-                           DTC(random_state=seed),
+                           DTC(max_depth=7, random_state=seed),
                            LogisticRegression(random_state=seed),
                            GaussianNB(),
                            xgb.XGBClassifier(n_estimators=900,
@@ -143,7 +144,7 @@ if __name__ == "__main__":
                 print 'Writing Validation submission file...'
                 pred_valid = clf.predict_proba(valid_train)[:,1]
                 print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
-                d = {'QuoteNumber': valid_quoteNum, 'QuoteConversion_Flag': pred_valid}
+                d = {'QuoteNumber': valid_quoteNum, name: pred_valid}
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
@@ -151,10 +152,11 @@ if __name__ == "__main__":
                 print 'Writing Test submission file...'
                 pred_test = clf.predict_proba(test)[:, 1]
                 submission = pd.read_csv('input/sample_submission.csv')
-                submission.QuoteConversion_Flag = pred_test
-                build_path = './submission/testVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
-                submission.to_csv(build_path, index=None)
-
+                test_quoteNum = submission.QuoteNumber
+                d = {'QuoteNumber': test_quoteNum, name: pred_valid}
+                df = pd.DataFrame(data=d, index=None)
+                build_path = './submission/predTest_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
+                df.to_csv(build_path, index=None)
 
 
 

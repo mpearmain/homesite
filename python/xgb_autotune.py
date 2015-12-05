@@ -28,10 +28,6 @@ def xgboostcv(max_depth,
                         objective="binary:logistic")
 
     xgb_model = clf.fit(x_train, y_train, eval_metric="auc", eval_set=[(x_valid, y_valid)], early_stopping_rounds=25)
-
-    print('xgb best round = ', xgb_model.best_iteration)
-    # Because our objective function is correct we can make use of the early stopping much easier an just set it very
-    # high
     return xgb_model.best_score
 
 if __name__ == "__main__":
