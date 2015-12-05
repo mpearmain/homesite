@@ -94,7 +94,7 @@ if __name__ == "__main__":
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.1, 1)})
             print('-'*53)
-            rfcBO.maximize(restarts=150, n_iter=5)
+            rfcBO.maximize(init_points=1, restarts=150, n_iter=1)
             print('RFC: %f' % rfcBO.res['max']['max_val'])
 
             print 'Running Extra Trees Optimization'
@@ -102,7 +102,7 @@ if __name__ == "__main__":
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.1, 1)})
             print('-'*53)
-            etcBO.maximize(restarts=150, n_iter=5)
+            etcBO.maximize(init_points=1, restarts=150, n_iter=1)
             print('RFC: %f' % etcBO.res['max']['max_val'])
 
             ##################################################################################################
