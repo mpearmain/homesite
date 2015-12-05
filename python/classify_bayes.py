@@ -19,10 +19,13 @@ import xgboost as xgb
 from sklearn.metrics import roc_auc_score as auc
 from sklearn.ensemble import RandomForestClassifier as RFC
 from sklearn.ensemble import ExtraTreesClassifier as ETC
+from sklearn.ensemble import BaggingClassifier
+from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from bayesian_optimization import BayesianOptimization
 from sklearn.tree import DecisionTreeClassifier as DTC
+
 
 def rfccv(n_estimators, min_samples_split, max_features):
     clf = RFC(n_estimators=int(n_estimators),
@@ -112,19 +115,19 @@ if __name__ == "__main__":
 
 
             print 'Running Random Forest Optimization'
-            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
+            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(75)),
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.05, 1)})
             print('-'*53)
-            rfcBO.maximize(init_points=10, restarts=150, n_iter=10)
+            rfcBO.maximize(init_points=2, restarts=150, n_iter=5)
             print('RFC: %f' % rfcBO.res['max']['max_val'])
 
             print 'Running Extra Trees Optimization'
-            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
+            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(75)),
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.05, 1)})
             print('-'*53)
-            etcBO.maximize(init_points=10, restarts=150, n_iter=10)
+            etcBO.maximize(init_points=2, restarts=150, n_iter=5)
             print('RFC: %f' % etcBO.res['max']['max_val'])
             
             print 'Running XGBoost Optimization'
