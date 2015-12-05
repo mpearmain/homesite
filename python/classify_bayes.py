@@ -145,14 +145,14 @@ if __name__ == "__main__":
                 print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
                 d = {'QuoteNumber': valid_quoteNum, 'QuoteConversion_Flag': pred_valid}
                 df = pd.DataFrame(data=d, index=None)
-                build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i] + '_' + str(seed) + '.csv'
+                build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
 
                 print 'Writing Test submission file...'
                 pred_test = clf.predict_proba(test)[:, 1]
                 submission = pd.read_csv('input/sample_submission.csv')
                 submission.QuoteConversion_Flag = pred_test
-                build_path = './submission/testVaild_' + name + '_' + DATASETS_TRAIN[i] + '_' + str(seed) + '.csv'
+                build_path = './submission/testVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 submission.to_csv(build_path, index=None)
 
 
