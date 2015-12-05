@@ -177,7 +177,7 @@ if __name__ == "__main__":
                 print 'Writing Validation submission file...'
                 pred_valid = clf.predict_proba(valid_train)[:,1]
                 print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
-                d = {'QuoteNumber': valid_quoteNum, 'QuoteConversion_Flag': pred_valid}
+                d = {'QuoteNumber': valid_quoteNum, name: pred_valid}
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
@@ -190,7 +190,6 @@ if __name__ == "__main__":
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predTest_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
-
 
 
 
