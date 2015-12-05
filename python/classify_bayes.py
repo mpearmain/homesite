@@ -46,14 +46,35 @@ def etccv(n_estimators, min_samples_split, max_features):
     pred_valid = clf.predict_proba(valid_train)[:,1]
     return auc(valid_y, pred_valid)
 
+def xgboostcv(max_depth,
+              learning_rate,
+              n_estimators,
+              subsample,
+              colsample_bytree,
+              silent=True,
+              nthread=-1,
+              seed=1234):
 
+    clf = XGBClassifier(max_depth=int(max_depth),
+                        learning_rate=learning_rate,
+                        n_estimators=int(n_estimators),
+                        silent=silent,
+                        nthread=-1,
+                        subsample=subsample,
+                        colsample_bytree=colsample_bytree,
+                        seed=seed,
+                        objective="binary:logistic")
+
+    xgb_model = clf.fit(meta_train, meta_y, eval_metric="auc", eval_set=[(valid_train, valid_y)], early_stopping_rounds=25)
+    return xgb_model.best_score
+    
 ########################################################################################################################
 ####### RUN ########
 
 if __name__ == "__main__":
-    DATASETS_TRAIN = ['input/xtrain_mp1.csv', 'input/xtrain_kb4.csv']
-    DATASETS_TEST = ['input/xtest_mp1.csv', 'input/xtest_kb4.csv']
-    SEEDS = [1234]
+    DATASETS_TRAIN = ['input/xtrain_mp1.csv', 'input/xtrain_kb3.csv', 'input/xtrain_kb4.csv']
+    DATASETS_TEST = ['input/xtest_mp1.csv', 'input/xtest_kb3.csv', 'input/xtest_kb4.csv']
+    SEEDS = [1234, 5678, 9101112]
 
     print('Loading X-folds data set')
     x_folds = pd.read_csv('input/xfolds.csv')
@@ -69,6 +90,7 @@ if __name__ == "__main__":
             x_train = pd.read_csv(DATASETS_TRAIN[i])
             print 'Loading', DATASETS_TEST[i], 'data set'
             test = pd.read_csv(DATASETS_TEST[i])
+            test = test.drop('QuoteNumber', axis=1)
 
             # Make sure final set has no na's (should be solved in data_preparation.R)
             x_train = x_train.fillna(-1)
@@ -90,20 +112,33 @@ if __name__ == "__main__":
 
 
             print 'Running Random Forest Optimization'
-            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(80), int(130)),
+            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
                                                  'min_samples_split': (int(1), int(25)),
-                                                 'max_features': (0.1, 1)})
+                                                 'max_features': (0.05, 1)})
             print('-'*53)
-            rfcBO.maximize(init_points=1, restarts=150, n_iter=1)
+            rfcBO.maximize(init_points=10, restarts=150, n_iter=10)
             print('RFC: %f' % rfcBO.res['max']['max_val'])
 
             print 'Running Extra Trees Optimization'
-            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(80), int(150)),
+            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
                                                  'min_samples_split': (int(1), int(25)),
-                                                 'max_features': (0.1, 1)})
+                                                 'max_features': (0.05, 1)})
             print('-'*53)
-            etcBO.maximize(init_points=1, restarts=150, n_iter=1)
+            etcBO.maximize(init_points=10, restarts=150, n_iter=10)
             print('RFC: %f' % etcBO.res['max']['max_val'])
+            
+            print 'Running XGBoost Optimization'
+            xgboostBO = BayesianOptimization(xgboostcv,
+                                     {'max_depth': (int(4), int(12)),
+                                      'learning_rate': (0.04, 0.02),
+                                      'n_estimators': (int(2300), int(2300)),
+                                      'subsample': (0.8, 0.9),
+                                      'colsample_bytree': (0.8, 0.9)
+                                     })
+
+            xgboostBO.maximize(init_points=10, restarts=150, n_iter=10)
+            print('XGBOOST: %f' % xgboostBO.res['max']['max_val'])
+
 
             ##################################################################################################
             #
@@ -119,16 +154,15 @@ if __name__ == "__main__":
                                max_features=etcBO.res['max']['max_params']['max_features'],
                                n_jobs=-1,
                                random_state=seed),
-                           DTC(random_state=seed),
+                           DTC(max_depth=7, random_state=seed),
                            LogisticRegression(random_state=seed),
                            GaussianNB(),
-                           xgb.XGBClassifier(n_estimators=900,
-                                             nthread=-1,
-                                             max_depth=8,
-                                             learning_rate=0.03,
-                                             silent=True,
-                                             subsample=0.8,
-                                             colsample_bytree=0.85,
+                           xgb.XGBClassifier(max_depth=int(xgboostBO.res['max']['max_params']['max_depth']),
+                                             learning_rate=xgboostBO.res['max']['max_params']['learning_rate'],
+                                             n_estimators=int(xgboostBO.res['max']['max_params']['n_estimators']),
+                                             subsample=xgboostBO.res['max']['max_params']['subsample'],
+                                             colsample_bytree=xgboostBO.res['max']['max_params']['colsample_bytree'],
+                                             objective="binary:logistic",
                                              seed=seed)]
 
 
@@ -136,7 +170,7 @@ if __name__ == "__main__":
             for name, clf in zip(names, classifiers):
                 print 'Building', name, 'model'
                 if name == 'XGBoost':
-                    clf.fit(meta_train, meta_y, eval_metric="auc")
+                    clf.fit(meta_train, meta_y, eval_metric="auc", eval_set=[(valid_train, valid_y)], early_stopping_rounds=25)
                 if name != 'XGBoost':
                     clf.fit(meta_train, meta_y)
                 # Predict values for validation check
@@ -148,12 +182,14 @@ if __name__ == "__main__":
                 build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
 
-                print 'Writing Test submission file...'
+                 print 'Writing Test submission file...'
                 pred_test = clf.predict_proba(test)[:, 1]
                 submission = pd.read_csv('input/sample_submission.csv')
-                submission.QuoteConversion_Flag = pred_test
-                build_path = './submission/testVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
-                submission.to_csv(build_path, index=None)
+                test_quoteNum = submission.QuoteNumber
+                d = {'QuoteNumber': test_quoteNum, name: pred_valid}
+                df = pd.DataFrame(data=d, index=None)
+                build_path = './submission/predTest_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
+                df.to_csv(build_path, index=None)
 
 
 
