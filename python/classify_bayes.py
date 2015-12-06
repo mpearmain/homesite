@@ -58,7 +58,7 @@ def xgboostcv(max_depth,
               nthread=-1,
               seed=1234):
 
-    clf = XGBClassifier(max_depth=int(max_depth),
+    clf = xgb.XGBClassifier(max_depth=int(max_depth),
                         learning_rate=learning_rate,
                         n_estimators=int(n_estimators),
                         silent=silent,
@@ -75,8 +75,8 @@ def xgboostcv(max_depth,
 ####### RUN ########
 
 if __name__ == "__main__":
-    DATASETS_TRAIN = ['input/xtrain_mp1.csv', 'input/xtrain_kb3.csv', 'input/xtrain_kb4.csv']
-    DATASETS_TEST = ['input/xtest_mp1.csv', 'input/xtest_kb3.csv', 'input/xtest_kb4.csv']
+    DATASETS_TRAIN = ['input/xtrain_mp1.csv', 'input/xtrain_kb4.csv']
+    DATASETS_TEST = ['input/xtest_mp1.csv', 'input/xtest_kb4.csv']
     SEEDS = [1234, 5678, 9101112]
 
     print('Loading X-folds data set')
@@ -115,31 +115,31 @@ if __name__ == "__main__":
 
 
             print 'Running Random Forest Optimization'
-            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(75)),
+            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.05, 1)})
             print('-'*53)
-            rfcBO.maximize(init_points=2, restarts=150, n_iter=5)
+            rfcBO.maximize(init_points=5, restarts=150, n_iter=10)
             print('RFC: %f' % rfcBO.res['max']['max_val'])
 
             print 'Running Extra Trees Optimization'
-            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(75)),
+            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
                                                  'min_samples_split': (int(1), int(25)),
                                                  'max_features': (0.05, 1)})
             print('-'*53)
-            etcBO.maximize(init_points=2, restarts=150, n_iter=5)
+            etcBO.maximize(init_points=5, restarts=150, n_iter=10)
             print('RFC: %f' % etcBO.res['max']['max_val'])
             
             print 'Running XGBoost Optimization'
             xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (int(4), int(12)),
+                                     {'max_depth': (int(4), int(15)),
                                       'learning_rate': (0.04, 0.02),
                                       'n_estimators': (int(2300), int(2300)),
-                                      'subsample': (0.8, 0.9),
-                                      'colsample_bytree': (0.8, 0.9)
+                                      'subsample': (0.7, 0.9),
+                                      'colsample_bytree': (0.7, 0.9)
                                      })
 
-            xgboostBO.maximize(init_points=10, restarts=150, n_iter=10)
+            xgboostBO.maximize(init_points=5, restarts=150, n_iter=10)
             print('XGBOOST: %f' % xgboostBO.res['max']['max_val'])
 
 
@@ -180,7 +180,7 @@ if __name__ == "__main__":
                 print 'Writing Validation submission file...'
                 pred_valid = clf.predict_proba(valid_train)[:,1]
                 print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
-                d = {'QuoteNumber': valid_quoteNum, name: pred_valid}
+                d = {'QuoteNumber': valid_quoteNum, name+seed: pred_valid}
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
@@ -189,7 +189,7 @@ if __name__ == "__main__":
                 pred_test = clf.predict_proba(test)[:, 1]
                 submission = pd.read_csv('input/sample_submission.csv')
                 test_quoteNum = submission.QuoteNumber
-                d = {'QuoteNumber': test_quoteNum, name: pred_test}
+                d = {'QuoteNumber': test_quoteNum, name+seed: pred_test}
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predTest_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
