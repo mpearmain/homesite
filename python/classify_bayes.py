@@ -19,8 +19,6 @@ import xgboost as xgb
 from sklearn.metrics import roc_auc_score as auc
 from sklearn.ensemble import RandomForestClassifier as RFC
 from sklearn.ensemble import ExtraTreesClassifier as ETC
-from sklearn.ensemble import BaggingClassifier
-from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from bayesian_optimization import BayesianOptimization
@@ -48,6 +46,15 @@ def etccv(n_estimators, min_samples_split, max_features):
     clf.fit(meta_train, meta_y)
     pred_valid = clf.predict_proba(valid_train)[:,1]
     return auc(valid_y, pred_valid)
+
+def dtcv(max_depth):
+    clf = DTC(max_depth=int(max_depth),
+              random_state=1234)
+    # Predict values for validation check
+    clf.fit(meta_train, meta_y)
+    pred_valid = clf.predict_proba(valid_train)[:,1]
+    return auc(valid_y, pred_valid)
+
 
 def xgboostcv(max_depth,
               learning_rate,
@@ -87,66 +94,72 @@ if __name__ == "__main__":
 
     # Create the loop structure.
     for i in xrange(len(DATASETS_TRAIN)):
+
+        # Read the data files in - Train, test, and xfolds.
+        print 'Loading', DATASETS_TRAIN[i], 'data set'
+        x_train = pd.read_csv(DATASETS_TRAIN[i])
+        print 'Loading', DATASETS_TEST[i], 'data set'
+        test = pd.read_csv(DATASETS_TEST[i])
+        test = test.drop('QuoteNumber', axis=1)
+
+        # Make sure final set has no na's (should be solved in data_preparation.R)
+        x_train = x_train.fillna(-1)
+
+        print 'Splitting data sets for train, and validiation'
+        meta_quoteNum = x_folds[x_folds['valid'] == 0 ].QuoteNumber
+        meta_train = x_train[x_train['QuoteNumber'].isin(meta_quoteNum)]
+        meta_y = meta_train.QuoteConversion_Flag.values
+        meta_train = meta_train.drop(['QuoteNumber', 'QuoteConversion_Flag'], axis=1)
+        meta_names = list(meta_train)
+        del meta_quoteNum
+
+        valid_quoteNum = x_folds[x_folds['valid'] == 1 ].QuoteNumber
+        valid_train = x_train[x_train['QuoteNumber'].isin(valid_quoteNum)]
+        valid_y = valid_train.QuoteConversion_Flag.values
+        valid_train = valid_train.drop(['QuoteNumber', 'QuoteConversion_Flag'], axis=1)
+        valid_quoteNum
+        print 'Done...'
+
+        print 'Running Decision Trees Optimization'
+        dtBO = BayesianOptimization(dtcv, {'max_depth': (int(2), int(15))})
+        print('-'*53)
+        dtBO.maximize(init_points=5, restarts=150, n_iter=5)
+        print('DT: %f' % dtBO.res['max']['max_val'])
+
+        print 'Running Random Forest Optimization'
+        rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(75)),
+                                             'min_samples_split': (int(15), int(25)),
+                                             'max_features': (0.05, 0.31)})
+        print('-'*53)
+        rfcBO.maximize(init_points=5, restarts=150, n_iter=5)
+        print('RFC: %f' % rfcBO.res['max']['max_val'])
+
+        print 'Running Extra Trees Optimization'
+        etcBO = BayesianOptimization(etccv, {'n_estimators': (int(250), int(75)),
+                                             'min_samples_split': (int(15), int(25)),
+                                             'max_features': (0.05, 0.31)})
+        print('-'*53)
+        etcBO.maximize(init_points=5, restarts=150, n_iter=7)
+        print('ETC: %f' % etcBO.res['max']['max_val'])
+
+        print 'Running XGBoost Optimization'
+        xgboostBO = BayesianOptimization(xgboostcv,
+                                 {'max_depth': (int(4), int(15)),
+                                  'learning_rate': (0.04, 0.02),
+                                  'n_estimators': (int(2000), int(2000)),
+                                  'subsample': (0.7, 0.9),
+                                  'colsample_bytree': (0.7, 0.9)
+                                 })
+
+        xgboostBO.maximize(init_points=5, restarts=150, n_iter=7)
+        print('XGBOOST: %f' % xgboostBO.res['max']['max_val'])
+
+
+        ##################################################################################################
+        #
+        # Now predict on valid and Test
         for seed in SEEDS:
-            # Read the data files in - Train, test, and xfolds.
-            print 'Loading', DATASETS_TRAIN[i], 'data set'
-            x_train = pd.read_csv(DATASETS_TRAIN[i])
-            print 'Loading', DATASETS_TEST[i], 'data set'
-            test = pd.read_csv(DATASETS_TEST[i])
-            test = test.drop('QuoteNumber', axis=1)
-
-            # Make sure final set has no na's (should be solved in data_preparation.R)
-            x_train = x_train.fillna(-1)
-
-            print 'Splitting data sets for train, and validiation'
-            meta_quoteNum = x_folds[x_folds['valid'] == 0 ].QuoteNumber
-            meta_train = x_train[x_train['QuoteNumber'].isin(meta_quoteNum)]
-            meta_y = meta_train.QuoteConversion_Flag.values
-            meta_train = meta_train.drop(['QuoteNumber', 'QuoteConversion_Flag'], axis=1)
-            meta_names = list(meta_train)
-            del meta_quoteNum
-
-            valid_quoteNum = x_folds[x_folds['valid'] == 1 ].QuoteNumber
-            valid_train = x_train[x_train['QuoteNumber'].isin(valid_quoteNum)]
-            valid_y = valid_train.QuoteConversion_Flag.values
-            valid_train = valid_train.drop(['QuoteNumber', 'QuoteConversion_Flag'], axis=1)
-            valid_quoteNum
-            print 'Done...'
-
-
-            print 'Running Random Forest Optimization'
-            rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
-                                                 'min_samples_split': (int(1), int(25)),
-                                                 'max_features': (0.05, 1)})
-            print('-'*53)
-            rfcBO.maximize(init_points=5, restarts=150, n_iter=10)
-            print('RFC: %f' % rfcBO.res['max']['max_val'])
-
-            print 'Running Extra Trees Optimization'
-            etcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(750)),
-                                                 'min_samples_split': (int(1), int(25)),
-                                                 'max_features': (0.05, 1)})
-            print('-'*53)
-            etcBO.maximize(init_points=5, restarts=150, n_iter=10)
-            print('RFC: %f' % etcBO.res['max']['max_val'])
-            
-            print 'Running XGBoost Optimization'
-            xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (int(4), int(15)),
-                                      'learning_rate': (0.04, 0.02),
-                                      'n_estimators': (int(2300), int(2300)),
-                                      'subsample': (0.7, 0.9),
-                                      'colsample_bytree': (0.7, 0.9)
-                                     })
-
-            xgboostBO.maximize(init_points=5, restarts=150, n_iter=10)
-            print('XGBOOST: %f' % xgboostBO.res['max']['max_val'])
-
-
-            ##################################################################################################
-            #
-            # Now predict on valid and Test
-            names = ["Random Forest", "ExtraTrees", "DecisionTree", "LogisticRegression", "Naive Bayes", 'XGBoost']
+            names = ["RandomForest", "ExtraTrees", "DecisionTree", "LogisticRegression", "NaiveBayes", 'XGBoost']
             classifiers = [RFC(n_estimators=int(rfcBO.res['max']['max_params']['n_estimators']),
                                min_samples_split=int(rfcBO.res['max']['max_params']['min_samples_split']),
                                max_features=rfcBO.res['max']['max_params']['max_features'],
@@ -157,7 +170,7 @@ if __name__ == "__main__":
                                max_features=etcBO.res['max']['max_params']['max_features'],
                                n_jobs=-1,
                                random_state=seed),
-                           DTC(max_depth=7, random_state=seed),
+                           DTC(int(dtBO.res['max']['max_params']['max_depth'], random_state=seed)),
                            LogisticRegression(random_state=seed),
                            GaussianNB(),
                            xgb.XGBClassifier(max_depth=int(xgboostBO.res['max']['max_params']['max_depth']),
@@ -180,7 +193,7 @@ if __name__ == "__main__":
                 print 'Writing Validation submission file...'
                 pred_valid = clf.predict_proba(valid_train)[:,1]
                 print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
-                d = {'QuoteNumber': valid_quoteNum, name+seed: pred_valid}
+                d = {'QuoteNumber': valid_quoteNum, name+DATASETS_TRAIN[i][6:]+str(seed): pred_valid}
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
@@ -189,7 +202,7 @@ if __name__ == "__main__":
                 pred_test = clf.predict_proba(test)[:, 1]
                 submission = pd.read_csv('input/sample_submission.csv')
                 test_quoteNum = submission.QuoteNumber
-                d = {'QuoteNumber': test_quoteNum, name+seed: pred_test}
+                d = {'QuoteNumber': test_quoteNum, name+DATASETS_TRAIN[i][6:]+str(seed): pred_test}
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predTest_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
                 df.to_csv(build_path, index=None)
