@@ -121,13 +121,13 @@ if __name__ == "__main__":
         print 'Done...'
 
         print 'Running Decision Trees Optimization'
-        dtBO = BayesianOptimization(dtcv, {'max_depth': (int(2), int(15))})
+        dtBO = BayesianOptimization(dtcv, {'max_depth': (int(2), int(20))})
         print('-'*53)
-        dtBO.maximize(init_points=5, restarts=150, n_iter=5)
+        dtBO.maximize(init_points=5, restarts=250, n_iter=10)
         print('DT: %f' % dtBO.res['max']['max_val'])
 
         print 'Running Random Forest Optimization'
-        rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(75)),
+        rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(500)),
                                              'min_samples_split': (int(15), int(25)),
                                              'max_features': (0.05, 0.31)})
         print('-'*53)
@@ -135,7 +135,7 @@ if __name__ == "__main__":
         print('RFC: %f' % rfcBO.res['max']['max_val'])
 
         print 'Running Extra Trees Optimization'
-        etcBO = BayesianOptimization(etccv, {'n_estimators': (int(250), int(75)),
+        etcBO = BayesianOptimization(etccv, {'n_estimators': (int(250), int(500)),
                                              'min_samples_split': (int(15), int(25)),
                                              'max_features': (0.05, 0.31)})
         print('-'*53)
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
         print 'Running XGBoost Optimization'
         xgboostBO = BayesianOptimization(xgboostcv,
-                                 {'max_depth': (int(4), int(15)),
+                                 {'max_depth': (int(6), int(15)),
                                   'learning_rate': (0.04, 0.02),
                                   'n_estimators': (int(2000), int(2000)),
                                   'subsample': (0.7, 0.9),
@@ -170,7 +170,7 @@ if __name__ == "__main__":
                                max_features=etcBO.res['max']['max_params']['max_features'],
                                n_jobs=-1,
                                random_state=seed),
-                           DTC(int(dtBO.res['max']['max_params']['max_depth'], random_state=seed)),
+                           DTC(max_depth=int(dtBO.res['max']['max_params']['max_depth']), random_state=seed),
                            LogisticRegression(random_state=seed),
                            GaussianNB(),
                            xgb.XGBClassifier(max_depth=int(xgboostBO.res['max']['max_params']['max_depth']),
@@ -195,7 +195,7 @@ if __name__ == "__main__":
                 print 'AUC for classifier', name, '=', auc(valid_y, pred_valid)
                 d = {'QuoteNumber': valid_quoteNum, name+DATASETS_TRAIN[i][6:]+str(seed): pred_valid}
                 df = pd.DataFrame(data=d, index=None)
-                build_path = './submission/predVaild_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
+                build_path = './submission/predVaild_' + name + '_' + str(seed) + '_' + DATASETS_TRAIN[i][6:]
                 df.to_csv(build_path, index=None)
 
                 print 'Writing Test submission file...'
@@ -204,7 +204,7 @@ if __name__ == "__main__":
                 test_quoteNum = submission.QuoteNumber
                 d = {'QuoteNumber': test_quoteNum, name+DATASETS_TRAIN[i][6:]+str(seed): pred_test}
                 df = pd.DataFrame(data=d, index=None)
-                build_path = './submission/predTest_' + name + '_' + DATASETS_TRAIN[i][6:] + '_' + str(seed) + '.csv'
+                build_path = './submission/predTest_' + name + '_' + str(seed) + '_' + DATASETS_TRAIN[i][6:]
                 df.to_csv(build_path, index=None)
 
 

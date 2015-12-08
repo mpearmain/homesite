@@ -34,11 +34,12 @@ test.data[, QuoteNumber := NULL]
 ######################################################################
 ## Model. Use Caret to find best alpha and lambda
 # First remove duplicate cols that come from LR and DTrees.
-#keep.cols <- valid.data[,colnames(unique(as.matrix(valid.data), MARGIN=2))]
-#valid.data <- valid.data[, valid.data[,colnames(unique(as.matrix(valid.data), MARGIN=2))], with = F]
-
-eGrid <- expand.grid(.alpha = (1:10) * 0.1, 
-                     .lambda = (1:10) * 0.1)
+keep.cols <- valid.data[,colnames(unique(as.matrix(valid.data), MARGIN=2))]
+valid.data <- valid.data[, keep.cols, with = F]
+test.data <- test.data[, keep.cols, with = F]
+                         
+eGrid <- expand.grid(.alpha = (80:100) * 0.01, 
+                     .lambda = (20:40) * 0.01)
 Control <- trainControl(method = "repeatedcv", 
                         number = 10,
                         repeats = 10,
@@ -54,12 +55,13 @@ netFit <- train(x = as.matrix(valid.data),
                 family = "binomial",
                 metric = "ROC")
 
-auc(y, predict(netFit, valid.data, type = "prob"))
+# Check the local AUC
+auc(y, predict(netFit, valid.data, type = "prob")[2])
 
-
-submission <- predict(netFit, test.data, type = "prob")
+submission <- predict(netFit, test.data, type = "prob")[2]
+hist(submission$X1)
 submission <- as.data.table(list("QuoteNumber" = test.QuoteNumber, 
-                                 'QuoteConversion_Flag' = submission))
+                                 'QuoteConversion_Flag' = submission$X1))
 
 write.csv(submission, 'output/glmnet_test.csv', row.names = F)
 
