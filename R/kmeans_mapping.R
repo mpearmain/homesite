@@ -1,6 +1,9 @@
 ## wd etc ####
 require(readr)
 require(xgboost)
+require(h2o)
+
+h2oServer <- h2o.init(nthreads=-1, max_mem_size = "12g")
 
 ## functions ####
 
@@ -26,8 +29,7 @@ auc<-function (actual, predicted) {
 xtrain <- read_csv("./input/xtrain_kb4.csv")
 xtest <- read_csv("./input/xtest_kb4.csv")
 
-## fit model ####
-# separate into training and validation
+## create kmeans-based dataset ####
 xfolds <- read_csv("./input/xfolds.csv")
 isValid <- which(xfolds$valid == 1)
 y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
@@ -35,48 +37,27 @@ xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
 xtrain$SalesField8 <- xtest$SalesField8 <- NULL
 
 # map to distances from kmeans clusters
-nof_centers <- 20
+nof_centers <- 40
 km0 <- kmeans(xtrain, centers = nof_centers)
-dist_matrix <- array(0, c(nrow(xtrain), nof_centers))
+dist1 <- array(0, c(nrow(xtrain), nof_centers))
 for (ii in 1:nof_centers)
 {
-  dist_matrix[,ii] <- apply(xtrain,1,function(s) sd(s - km0$centers[ii,]))
+  dist1[,ii] <- apply(xtrain,1,function(s) sd(s - km0$centers[ii,]))
+  msg(ii)
+}
+dist2 <- array(0, c(nrow(xtest), nof_centers))
+for (ii in 1:nof_centers)
+{
+  dist2[,ii] <- apply(xtest,1,function(s) sd(s - km0$centers[ii,]))
   msg(ii)
 }
 
-
-# setup xgb
-# xgboost format
-dval<-xgb.DMatrix(data=data.matrix(xtrain[isValid, ]),label=y[isValid])
-dtrain<-xgb.DMatrix(data=data.matrix(xtrain[-isValid,]),label=y[-isValid ])
-# setup
-watchlist<-list(val=dval)
-param <- list(  objective           = "binary:logistic", 
-                booster = "gbtree",
-                eta                 = 0.05,
-                max_depth           = 25, 
-                subsample           = 0.9, 
-                colsample_bytree    = 0.7,
-                eval_metric = "auc",
-                gamma = 0.005
-)
-
-# fit the model
-clf <- xgb.train(   params              = param, 
-                    data                = dtrain, 
-                    nrounds             = 15000,
-                    verbose             = 0,
-                    early.stop.round    = 25,
-                    watchlist           = watchlist,
-                    maximize            = TRUE
-                    )
-
-# re-fit on complete data
+## model fitting ####
+# load split
+xfolds <- read_csv("./input/xfolds.csv")
+dist1 <- data.frame(dist1)
+dist2 <- data.frame(dist2)
+dist1$target <- factor(y)
 
 
-## generate prediction ####
-pred1 <- expm1(predict(clf, data.matrix(xtest)))
-xsub <- data.frame(QuoteNumber = xtest$QuoteNumber, QuoteConversion_Flag = pred1)
-xsub$QuoteConversion_Flag <- rank(pred1)/nrow(xsub)
-write_csv(xsub, "./submissions/btb_data_kb4.csv")
 
