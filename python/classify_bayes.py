@@ -121,9 +121,9 @@ if __name__ == "__main__":
         print 'Done...'
 
         print 'Running Decision Trees Optimization'
-        dtBO = BayesianOptimization(dtcv, {'max_depth': (int(2), int(20))})
+        dtBO = BayesianOptimization(dtcv, {'max_depth': (int(5), int(25))})
         print('-'*53)
-        dtBO.maximize(init_points=5, restarts=250, n_iter=10)
+        dtBO.maximize(init_points=5, restarts=250, n_iter=5)
         print('DT: %f' % dtBO.res['max']['max_val'])
 
         print 'Running Random Forest Optimization'
@@ -131,7 +131,7 @@ if __name__ == "__main__":
                                              'min_samples_split': (int(15), int(25)),
                                              'max_features': (0.05, 0.31)})
         print('-'*53)
-        rfcBO.maximize(init_points=5, restarts=150, n_iter=5)
+        rfcBO.maximize(init_points=5, restarts=250, n_iter=5)
         print('RFC: %f' % rfcBO.res['max']['max_val'])
 
         print 'Running Extra Trees Optimization'
@@ -139,7 +139,7 @@ if __name__ == "__main__":
                                              'min_samples_split': (int(15), int(25)),
                                              'max_features': (0.05, 0.31)})
         print('-'*53)
-        etcBO.maximize(init_points=5, restarts=150, n_iter=7)
+        etcBO.maximize(init_points=5, restarts=250, n_iter=7)
         print('ETC: %f' % etcBO.res['max']['max_val'])
 
         print 'Running XGBoost Optimization'
@@ -151,7 +151,7 @@ if __name__ == "__main__":
                                   'colsample_bytree': (0.7, 0.9)
                                  })
 
-        xgboostBO.maximize(init_points=5, restarts=150, n_iter=7)
+        xgboostBO.maximize(init_points=5, restarts=250, n_iter=7)
         print('XGBOOST: %f' % xgboostBO.res['max']['max_val'])
 
 
@@ -206,9 +206,5 @@ if __name__ == "__main__":
                 df = pd.DataFrame(data=d, index=None)
                 build_path = './submission/predTest_' + name + '_' + str(seed) + '_' + DATASETS_TRAIN[i][6:]
                 df.to_csv(build_path, index=None)
-
-
-
-
 
 
