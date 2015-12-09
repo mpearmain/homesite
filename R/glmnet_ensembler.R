@@ -4,6 +4,8 @@ library(glmnet)
 library(Metrics)
 library(caret)
 library(e1071)
+library(doParallel)
+
 # Load the train dataset -> forgot to add the QuoteConversionFlag to output :-S
 # Lets merge.
 train <- fread('input/train.csv', select = c('QuoteNumber', 'QuoteConversion_Flag'))
@@ -38,14 +40,18 @@ keep.cols <- valid.data[,colnames(unique(as.matrix(valid.data), MARGIN=2))]
 valid.data <- valid.data[, keep.cols, with = F]
 test.data <- test.data[, keep.cols, with = F]
                          
-eGrid <- expand.grid(.alpha = (80:100) * 0.01, 
-                     .lambda = (20:40) * 0.01)
+eGrid <- expand.grid(.alpha = (70:100) * 0.01, 
+                     .lambda = (1:40) * 0.01)
 Control <- trainControl(method = "repeatedcv", 
+                        allowParallel = T,
                         number = 10,
                         repeats = 10,
                         verboseIter =TRUE,
                         classProbs = TRUE,
                         summaryFunction=twoClassSummary)
+
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
 
 netFit <- train(x = as.matrix(valid.data), 
                 y = as.factor(make.names(y)),
@@ -54,7 +60,7 @@ netFit <- train(x = as.matrix(valid.data),
                 trControl = Control,
                 family = "binomial",
                 metric = "ROC")
-
+stopCluster(cl)
 # Check the local AUC
 auc(y, predict(netFit, valid.data, type = "prob")[2])
 
