@@ -65,8 +65,8 @@ dl.model <- h2o.deeplearning(
   l1 = 0, l2 = 0,  loss = c("CrossEntropy")
 )
 
-pred_valid <- as.data.frame(predict(dl.model, valid.hex))$p1
-pred_full <- as.data.frame(predict(dl.model, test.hex))$p1
+pred_valid_h2o_v2 <- as.data.frame(predict(dl.model, valid.hex))$p1
+pred_full_h2o_v2 <- as.data.frame(predict(dl.model, test.hex))$p1
 
 pred1 <- pred_full
 x <- read_csv("./input/xtest_kb4.csv")
