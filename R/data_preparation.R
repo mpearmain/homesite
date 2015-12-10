@@ -180,7 +180,7 @@ BuildMP2 <- function() {
 
 BuildMP2()
 
-## KB set v1 ####
+## KB set v1: factors mapped to integers ####
 # map everything to integers
 # read
 xtrain <- read_csv("./input/train.csv")
@@ -212,7 +212,7 @@ xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
 write_csv(xtrain, path = "./input/xtrain_kb1.csv")
 write_csv(xtest, path = "./input/xtest_kb1.csv")
 
-## KB set v2 ####
+## KB set v2: v1 + pairwise factors mapped to integers ####
 # - create more factors (pairwise combinations)
 # - map everything to integers
 # read
@@ -260,8 +260,7 @@ xtrain$Original_Quote_Date <- xtest$Original_Quote_Date <- NULL
 write_csv(xtrain, path = "./input/xtrain_kb2.csv")
 write_csv(xtest, path = "./input/xtest_kb2.csv")
 
-## KB set v3 ####
-# same as v1, but factors replaced by response rates
+## KB set v3: v1, but factors replaced by response rates ####
 # read
 xtrain <- read_csv("./input/train.csv")
 xtest <- read_csv("./input/test.csv")
@@ -348,8 +347,7 @@ xtest <- xtest[,-ix]
 write_csv(xtrain, path = "./input/xtrain_kb3.csv")
 write_csv(xtest, path = "./input/xtest_kb3.csv")
 
-## KB set v4 ####
-# ~ v1, but create (almost) everything as factors
+## KB set v4: ~ v1, but create (almost) everything as factors ####
 # read
 xtrain <- read_csv("./input/train.csv")
 xtest <- read_csv("./input/test.csv")
@@ -449,8 +447,7 @@ for (xn in xnames)
 write_csv(xtrain, path = "./input/xtrain_kb4.csv")
 write_csv(xtest, path = "./input/xtest_kb4.csv")
 
-## KB set v5 ####
-# v2 + treat almost everything as factors
+## KB set v5: ~v2 + treat almost everything as factors ####
 # read
 xtrain <- read_csv("./input/train.csv")
 xtest <- read_csv("./input/test.csv")
@@ -628,8 +625,7 @@ xtrain$Field6PersonalField16 <- xtest$Field6PersonalField16 <- NULL
 write_csv(xtrain, path = "./input/xtrain_kb5.csv")
 write_csv(xtest, path = "./input/xtest_kb5.csv")
 
-## KB set v6 ####
-# kmeans based on v4 
+## KB set v6: ~kmeans based on v4  ####
 xtrain <- read_csv("./input/xtrain_kb4.csv")
 xtest <- read_csv("./input/xtest_kb4.csv")
 
@@ -669,12 +665,11 @@ dist2$QuoteNumber <- test_QuoteNumber
 write_csv(dist1, "./input/xtrain_kb6.csv")
 write_csv(dist2, "./input/xtest_kb6.csv")
 
-## KB set v7 ####
-# kmeans based on v5 
+## KB set v7: kmeans based on v5  ####
 xtrain <- read_csv("./input/xtrain_kb5.csv")
 xtest <- read_csv("./input/xtest_kb5.csv")
 
-## create kmeans-based dataset ####
+## create kmeans-based dataset
 xfolds <- read_csv("./input/xfolds.csv")
 isValid <- which(xfolds$valid == 1)
 y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
