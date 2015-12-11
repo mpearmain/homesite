@@ -62,29 +62,39 @@ if __name__ == '__main__':
     
     ## build 2nd level forecasts
     for i in range(len(param_grid)):        
-            print "processing parameter combo:", i
+            print "processing parameter combo:", param_grid[i]
             # configure model with j-th combo of parameters
             x = param_grid[i]
-            xgb_param = {"objective":"multi:softprob","eval_metric":"mlogloss", 
-            "num_class":3, "min_child_weight":x[0], 
-              "max_depth":x[1], "colsample_bytree":x[2],
-             "subsample":x[3] , "gamma":x[4], "eta":x[5], "silent":1}            
+            xgb_param = {"objective":"binary:logistic",
+                         "eval_metric":"auc",
+                         "num_class":2,
+                         "min_child_weight":x[0],
+                         "max_depth":x[1],
+                         "colsample_bytree":x[2],
+                         "subsample":x[3] ,
+                         "gamma":x[4],
+                         "eta":x[5],
+                         "silent":1}
             
             # loop over folds
             for j in range(0,n_folds):
                 idx0 = np.where(fold_index != j)
                 idx1 = np.where(fold_index == j)
-                x0 = np.array(xtrain)[idx0,:][0]; x1 = np.array(xtrain)[idx1,:][0]
-                y0 = np.array(ytrain)[idx0]; y1 = np.array(ytrain)[idx1]
-			
+                x0 = np.array(xtrain)[idx0,:][0]
+                x1 = np.array(xtrain)[idx1,:][0]
+                y0 = np.array(ytrain)[idx0]
+                y1 = np.array(ytrain)[idx1]
+
                 # fit the model on observations associated with subject whichSubject in this fold
-                bst1 = xgb.train(params = xgb_param, dtrain = xgb.DMatrix(x0, label=y0), 
+                bst1 = xgb.train(params = xgb_param,
+                                 dtrain = xgb.DMatrix(x0, label=y0),
                                  num_boost_round = x[6]) 
                 mvalid[idx1,i] = bst1.predict(xgb.DMatrix(x1))
                 
             # fit on complete dataset
-            bst1 = xgb.train(params = xgb_param, dtrain = xgb.DMatrix(xtrain, label=ytrain), 
-                                 num_boost_round = x[6]) 
+            bst1 = xgb.train(params = xgb_param,
+                             dtrain = xgb.DMatrix(xtrain, label=ytrain),
+                             num_boost_round = x[6])
             mfull[:,i] = bst1.predict(xgb.DMatrix(xtest))
             
         
