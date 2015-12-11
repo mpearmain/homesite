@@ -19,8 +19,8 @@ import xgboost as xgb
 if __name__ == '__main__':
 
     ## settings
-    projPath = '/Users/konrad/Documents/projects/homesite/' 
-    dataset_version = "kb4"
+    projPath = './'
+    dataset_version = "mp1"
     model_type = "xgb" 
     seed_value = 123
     todate = datetime.datetime.now().strftime("%Y%m%d")
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     ## model
     # parameter grids: LR + range of training subjects to subset to 
     child_weight = [1,2,4]         
-    max_depth = [10, 20]
+    max_depth = [6, 10, 20]
     colsample = [0.6, 0.8, 0.9]
     rowsample = [0.6, 0.8, 0.9]
     gamma_val = [0, 0.001, 0.01]
