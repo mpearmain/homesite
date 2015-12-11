@@ -52,7 +52,8 @@ if __name__ == '__main__':
     rowsample = [0.6, 0.8, 0.9]
     gamma_val = [0, 0.001, 0.01]
     eta_val = [0.05, 0.01, 0.005, 0.0025]
-    param_grid = tuple([child_weight, max_depth, colsample, rowsample,gamma_val, eta_val ])
+    ntrees = [500, 1000]
+    param_grid = tuple([child_weight, max_depth, colsample, rowsample,gamma_val, eta_val, ntrees ])
     param_grid = list(product(*param_grid))
 
     # storage structure for forecasts
@@ -78,12 +79,12 @@ if __name__ == '__main__':
 			
                 # fit the model on observations associated with subject whichSubject in this fold
                 bst1 = xgb.train(params = xgb_param, dtrain = xgb.DMatrix(x0, label=y0), 
-                                 num_boost_round = 500) 
+                                 num_boost_round = x[6]) 
                 mvalid[idx1,i] = bst1.predict(xgb.DMatrix(x1))
                 
             # fit on complete dataset
             bst1 = xgb.train(params = xgb_param, dtrain = xgb.DMatrix(xtrain, label=ytrain), 
-                                 num_boost_round = 500) 
+                                 num_boost_round = x[6]) 
             mfull[:,i] = bst1.predict(xgb.DMatrix(xtest))
             
         
