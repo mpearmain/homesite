@@ -341,6 +341,7 @@ for (varname in factor_vars)
 # drop the factors
 ix <- which(colnames(xtrain) %in% factor_vars)
 xtrain <- xtrain[,-ix]
+ix <- which(colnames(xtest) %in% factor_vars)
 xtest <- xtest[,-ix]
 
 # store the files
