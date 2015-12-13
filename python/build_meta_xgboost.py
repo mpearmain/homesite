@@ -44,8 +44,8 @@ if __name__ == '__main__':
     # parameter grids: LR + range of training subjects to subset to 
     child_weight = [1,2,4]         
     max_depth = [6, 10, 20]
-    colsample = [0.6, 0.8, 0.9]
-    rowsample = [0.6, 0.8, 0.9]
+    colsample = [0.73, 0.83, 0.86]
+    rowsample = [0.76, 0.81, 0.85]
     gamma_val = [0, 0.001, 0.01]
     eta_val = [0.03, 0.01, 0.005, 0.0025]
     ntrees = [500, 1000, 2000]
@@ -82,12 +82,22 @@ if __name__ == '__main__':
                 y1 = ytrain[ytrain.index.isin(idx1)]
 
                 # fit the model on observations associated with subject whichSubject in this fold
-                clf.fit(x0, y0, eval_metric="auc", eval_set=[(x1, y1)])
+                clf.fit(x0, y0, eval_metric="auc", eval_set=[(x1, y1)], early_stopping_rounds=25)
                 mvalid[idx1,i] = clf.predict_proba(x1)[:,1]
-                
+
             # fit on complete dataset
-            clf.fit(xtrain, xtest, eval_metric="auc")
-            mfull[:,i] = clf.predict_proba(x1)[:,1]
+            bst = xgb.XGBClassifier(n_estimators=clf.best_iteration,
+                                    nthread=-1,
+                                    max_depth=x[1],
+                                    min_child_weight=x[0],
+                                    learning_rate=x[5],
+                                    silent=True,
+                                    subsample=x[3],
+                                    colsample_bytree=x[2],
+                                    gamma=x[2],
+                                    seed=seed_value)
+            bst.fit(xtrain, ytrain, eval_metric="auc")
+            mfull[:,i] = bst.predict_proba(xtest)[:,1]
             
         
     ## store the results
