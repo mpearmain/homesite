@@ -133,7 +133,7 @@ if __name__ == "__main__":
         print 'Running Random Forest Optimization'
         rfcBO = BayesianOptimization(rfccv, {'n_estimators': (int(250), int(500)),
                                              'min_samples_split': (int(15), int(25)),
-                                             'max_features': (0.05, 0.31)})
+                                             'max_features': (0.2, 0.51)})
         print('-'*53)
         rfcBO.maximize(init_points=5, restarts=250, n_iter=5)
         print('RFC: %f' % rfcBO.res['max']['max_val'])
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         print 'Running Extra Trees Optimization'
         etcBO = BayesianOptimization(etccv, {'n_estimators': (int(250), int(500)),
                                              'min_samples_split': (int(15), int(25)),
-                                             'max_features': (0.05, 0.31)})
+                                             'max_features': (0.2, 0.51)})
         print('-'*53)
         etcBO.maximize(init_points=5, restarts=250, n_iter=7)
         print('ETC: %f' % etcBO.res['max']['max_val'])

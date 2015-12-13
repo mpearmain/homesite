@@ -7,12 +7,8 @@ Created on Fri Dec 11 00:20:32 2015
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
-from sklearn import cross_validation
 from itertools import product
 import datetime
-import sys
-sys.path.append("/Users/konrad/Documents/projects/xgboost/wrapper/")
 import xgboost as xgb
 
 
@@ -51,9 +47,9 @@ if __name__ == '__main__':
     colsample = [0.6, 0.8, 0.9]
     rowsample = [0.6, 0.8, 0.9]
     gamma_val = [0, 0.001, 0.01]
-    eta_val = [0.05, 0.01, 0.005, 0.0025]
-    ntrees = [500, 1000]
-    param_grid = tuple([child_weight, max_depth, colsample, rowsample,gamma_val, eta_val, ntrees ])
+    eta_val = [0.03, 0.01, 0.005, 0.0025]
+    ntrees = [500, 1000, 2000]
+    param_grid = tuple([child_weight, max_depth, colsample, rowsample, gamma_val, eta_val, ntrees])
     param_grid = list(product(*param_grid))
 
     # storage structure for forecasts
@@ -65,37 +61,33 @@ if __name__ == '__main__':
             print "processing parameter combo:", param_grid[i]
             # configure model with j-th combo of parameters
             x = param_grid[i]
-            xgb_param = {"objective":"binary:logistic",
-                         "eval_metric":"auc",
-                         "num_class":2,
-                         "min_child_weight":x[0],
-                         "max_depth":x[1],
-                         "colsample_bytree":x[2],
-                         "subsample":x[3] ,
-                         "gamma":x[4],
-                         "eta":x[5],
-                         "silent":1}
+            clf = xgb.XGBClassifier(n_estimators=x[6],
+                                    nthread=-1,
+                                    max_depth=x[1],
+                                    min_child_weight=x[0],
+                                    learning_rate=x[5],
+                                    silent=True,
+                                    subsample=x[3],
+                                    colsample_bytree=x[2],
+                                    gamma=x[2],
+                                    seed=seed_value)
             
-            # loop over folds
-            for j in range(0,n_folds):
-                idx0 = np.where(fold_index != j)
-                idx1 = np.where(fold_index == j)
-                x0 = np.array(xtrain)[idx0,:][0]
-                x1 = np.array(xtrain)[idx1,:][0]
-                y0 = np.array(ytrain)[idx0]
-                y1 = np.array(ytrain)[idx1]
+            # loop over folds - Keeping as pandas for ease of use with xgb wrapper
+            for j in range(1 ,n_folds+1):
+                idx0 = xfolds[xfolds.fold5 != j].index
+                idx1 = xfolds[xfolds.fold5 == j].index
+                x0 = xtrain[xtrain.index.isin(idx0)]
+                x1 = xtrain[xtrain.index.isin(idx1)]
+                y0 = ytrain[ytrain.index.isin(idx0)]
+                y1 = ytrain[ytrain.index.isin(idx1)]
 
                 # fit the model on observations associated with subject whichSubject in this fold
-                bst1 = xgb.train(params = xgb_param,
-                                 dtrain = xgb.DMatrix(x0, label=y0),
-                                 num_boost_round = x[6]) 
-                mvalid[idx1,i] = bst1.predict(xgb.DMatrix(x1))
+                clf.fit(x0, y0, eval_metric="auc", eval_set=[(x1, y1)])
+                mvalid[idx1,i] = clf.predict_proba(x1)[:,1]
                 
             # fit on complete dataset
-            bst1 = xgb.train(params = xgb_param,
-                             dtrain = xgb.DMatrix(xtrain, label=ytrain),
-                             num_boost_round = x[6])
-            mfull[:,i] = bst1.predict(xgb.DMatrix(xtest))
+            clf.fit(xtrain, xtest, eval_metric="auc")
+            mfull[:,i] = clf.predict_proba(x1)[:,1]
             
         
     ## store the results
