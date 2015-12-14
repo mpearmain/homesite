@@ -42,13 +42,13 @@ if __name__ == '__main__':
     
     ## model
     # parameter grids: LR + range of training subjects to subset to 
-    child_weight = [1,2,4]         
-    max_depth = [6, 10, 20]
-    colsample = [0.73, 0.83, 0.86]
-    rowsample = [0.76, 0.81, 0.85]
-    gamma_val = [0, 0.001, 0.01]
-    eta_val = [0.03, 0.01, 0.005]
-    ntrees = [500, 1000, 2000]
+    child_weight = [1, 4]
+    max_depth = [6, 15]
+    colsample = [0.73, 0.83]
+    rowsample = [0.76, 0.81]
+    gamma_val = [0, 0.001]
+    eta_val = [0.03, 0.01]
+    ntrees = [1000, 2000]
     param_grid = tuple([child_weight, max_depth, colsample, rowsample, gamma_val, eta_val, ntrees])
     param_grid = list(product(*param_grid))
 
@@ -74,6 +74,7 @@ if __name__ == '__main__':
             
             # loop over folds - Keeping as pandas for ease of use with xgb wrapper
             for j in range(1, n_folds+1):
+                print "Processing Fold", j
                 idx0 = xfolds[xfolds.fold5 != j].index
                 idx1 = xfolds[xfolds.fold5 == j].index
                 x0 = xtrain[xtrain.index.isin(idx0)]
