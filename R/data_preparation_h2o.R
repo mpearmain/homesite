@@ -34,6 +34,8 @@ auc<-function (actual, predicted) {
 xtrain <- read_csv(paste("./input/xtrain_",dataset_version,".csv", sep = ""))
 xtest <- read_csv(paste("./input/xtest_",dataset_version,".csv", sep = ""))
 y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
+id_train <- xtrain$QuoteNumber
+id_test <- xtest$QuoteNumber
 xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
 xtrain$SalesField8 <- xtest$SalesField8 <- NULL
 
@@ -105,14 +107,17 @@ dl.model <- h2o.deeplearning(
   l1 = 0, l2 = 0,  loss = c("CrossEntropy")
 )
 
-
-
-
 ## store complete versions ####
+xtrain1$QuoteConversion_Flag <- y
+xtrain2$QuoteConversion_Flag <- y
+xtrain1$QuoteNumber <- id_train
+xtrain2$QuoteNumber <- id_train
+xtest1$QuoteNumber <- id_test
+xtest2$QuoteNumber <- id_test
 
-pred1 <- pred_full
-x <- read_csv("./input/xtest_kb4.csv")
-xsub <- data.frame(QuoteNumber = x$QuoteNumber, QuoteConversion_Flag = pred1)
-xsub$QuoteConversion_Flag <- rank(pred1)/nrow(xsub)
-write_csv(xsub, "./submissions/h2o_kb5_v1.csv")
+write_csv(xtrain1, "./input/xtrain_kb8.csv")
+write_csv(xtest1, "./input/xtest_kb8.csv")
+write_csv(xtrain2, "./input/xtrain_kb9.csv")
+write_csv(xtest2, "./input/xtest_kb9.csv")
+
 
