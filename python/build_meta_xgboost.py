@@ -91,19 +91,19 @@ if __name__ == '__main__':
             mfull[:,i] = clf.predict_proba(xtest)[:,1]
             
         
-    ## store the results
-    # add indices etc
-    mvalid = pd.DataFrame(mvalid)
-    mvalid.columns = [model_type + str(i) for i in range(0, mvalid.shape[1])]
-    mvalid['QuoteNumber'] = id_train
-    mvalid['QuoteConversion_Flag'] = ytrain
-    
-    mfull = pd.DataFrame(mfull)
-    mfull.columns = [model_type + str(i) for i in range(0, mfull.shape[1])]
-    mfull['QuoteNumber'] = id_test
+            ## store the results
+            # add indices etc
+            mvalid = pd.DataFrame(mvalid)
+            mvalid.columns = [model_type + str(k) for k in range(0, mvalid.shape[1])]
+            mvalid['QuoteNumber'] = id_train
+            mvalid['QuoteConversion_Flag'] = ytrain
+            
+            mfull = pd.DataFrame(mfull)
+            mfull.columns = [model_type + str(k) for k in range(0, mfull.shape[1])]
+            mfull['QuoteNumber'] = id_test
     
 
-    # save the files            
-    mvalid.to_csv(projPath + 'metafeatures/prval_' + model_type + '_' + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '.csv', index = False, header = True)
-    mfull.to_csv(projPath + 'metafeatures/prfull_' + model_type + '_' + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '.csv', index = False, header = True)
+            # save the files            
+            mvalid.to_csv(projPath + 'metafeatures/prval_' + model_type + '_' + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '_param' + str(i) + '.csv', index = False, header = True)
+            mfull.to_csv(projPath + 'metafeatures/prfull_' + model_type + '_' + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '_param' + str(i) + '.csv', index = False, header = True)
     
