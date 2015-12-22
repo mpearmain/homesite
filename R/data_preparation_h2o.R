@@ -107,6 +107,12 @@ dl.model <- h2o.deeplearning(
   l1 = 0, l2 = 0,  loss = c("CrossEntropy")
 )
 
+# extract layer 1 and 2 
+xtest1 <- h2o.deepfeatures(dl.model, xtest.hex, layer = 1)
+xtest1 <- as.data.frame(xtest1)
+xtest2 <- as.data.frame(h2o.deepfeatures(dl.model, xtest.hex, layer = 2))
+
+
 ## store complete versions ####
 xtrain1$QuoteConversion_Flag <- y
 xtrain2$QuoteConversion_Flag <- y
