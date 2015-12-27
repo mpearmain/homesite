@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     ## settings
     projPath = '/Users/konrad/Documents/projects/homesite/' 
-    dataset_version = "kb4"
+    dataset_version = "kb3"
     model_type = "logreg" 
     seed_value = 123
     todate = datetime.datetime.now().strftime("%Y%m%d")
@@ -32,7 +32,10 @@ if __name__ == '__main__':
     xtest = pd.read_csv(projPath + 'input/xtest_'+ dataset_version + '.csv')     
     id_test = xtest.QuoteNumber
     xtest.drop('QuoteNumber', axis = 1, inplace = True)
-        
+    
+    #xtrain.drop('SalesField8', axis = 1, inplace = True)
+    #xtest.drop('SalesField8', axis = 1, inplace = True)
+    
     # folds
     xfolds = pd.read_csv(projPath + 'input/xfolds.csv')
     # work with 5-fold split
@@ -44,7 +47,7 @@ if __name__ == '__main__':
     # setup model instances
     model = LogisticRegression()
            
-    # parameter grids: LR + range of training subjects to subset to 
+    # parameter grids
     c_vals = [0.01, 0.05, 0.1, 0.25, 0.9]         
     pen_vals = ['l1']                                
     f_vals = [ True]                                 
@@ -74,11 +77,12 @@ if __name__ == '__main__':
                 # fit the model on observations associated with subject whichSubject in this fold
                 model.fit(x0, y0)
                 mvalid[idx1,i] = model.predict_proba(x1)[:,1]
+                print "finished fold:", j
                 
             # fit on complete dataset
             model.fit(xtrain, ytrain)
             mfull[:,i] = model.predict_proba(xtest)[:,1]
-            
+            print "finished full prediction"
         
     ## store the results
     # add indices etc
@@ -93,6 +97,6 @@ if __name__ == '__main__':
     
 
     # save the files            
-    mvalid.to_csv(projPath + 'metafeatures/prval_' + model_type + '_' + todate + '_seed' + str(seed_value) + '.csv', index = False, header = True)
-    mfull.to_csv(projPath + 'metafeatures/prfull_' + model_type + '_' + todate + '_seed' + str(seed_value) + '.csv', index = False, header = True)
+    mvalid.to_csv(projPath + 'metafeatures/prval_' + model_type + '_' + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '.csv', index = False, header = True)
+    mfull.to_csv(projPath + 'metafeatures/prfull_' + model_type + '_' + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '.csv', index = False, header = True)
     
