@@ -7,7 +7,6 @@ Created on Fri Dec 11 00:20:32 2015
 
 import numpy as np
 import pandas as pd
-from itertools import product
 import datetime
 import xgboost as xgb
 
@@ -42,16 +41,39 @@ if __name__ == '__main__':
     
     ## model
     # parameter grids: LR + range of training subjects to subset to 
-    child_weight = [1, 4]
-    max_depth = [6, 15]
-    colsample = [0.73, 0.83]
-    rowsample = [0.76, 0.81]
-    gamma_val = [0, 0.001]
-    eta_val = [0.03, 0.01]
-    ntrees = [1000, 2000]
-    param_grid = tuple([child_weight, max_depth, colsample, rowsample, gamma_val, eta_val, ntrees])
-    param_grid = list(product(*param_grid))
-
+    '''
+    Staying with index convention.
+        child_weight = 0
+        max_depth = 1
+        colsample = 2
+        rowsample = 3
+        gamma_val = 4
+        eta_val = 5
+        ntrees = 6
+    '''
+    param_grid = [
+        (1, 40, 0.73, 0.756, 0.001, 0.02, 1500),
+        (4, 8, 0.87, 0.798, 0.0007, 0.043, 400),
+        (10, 6, 0.60, 0.90, 0, 0.0432, 380),
+        (3, 8, 0.87, 0.7890, 0, 0.09087, 350),
+        (1, 3, 0.789, 0.97, 0, 0.012, 1100),
+        (1, 10, 0.97, 0.95, 0.0001, 0.0347, 700),
+        (7, 9, 0.53, 0.879, 0.005, 0.019, 900),
+        (7, 6, 0.80, 0.54, 0, 0.0215, 1300),
+        (7, 3, 0.50, 0.66, 0, 0.08732, 300),
+        (1, 6, 0.89, 0.694, 0, 0.05421, 700),
+        (1, 10, 0.74, 0.908, 0, 0.0121, 1750),
+        (1, 15, 0.7890, 0.890643, 0.231, 0.21, 900),
+        (15, 15, 0.74231, 0.8634, 0.003832, 0.03, 900),
+        (1, 19, 0.78, 0.97453, 0, 0.001, 3900),
+        (2, 6, 0.91, 0.795342, 0, 0.032, 800),
+        (2, 8, 0.53, 0.53429, 0, 0.0213, 1500),
+        (8, 6, 0.87, 0.54238, 0, 0.0215, 1500),
+        (5, 60, 0.99, 0.98, 0.0001, 0.00821, 2300),
+        (3, 23, 0.564, 0.89534, 0.002, 0.025, 900),
+        (9, 5, 0.7, 0.98032, 0, 0.0289, 900),
+        (5, 9, 0.73, 0.7649, 0, 0.0187, 900)
+    ]
     # storage structure for forecasts
     mvalid = np.zeros((xtrain.shape[0],len(param_grid)))
     mfull = np.zeros((xtest.shape[0],len(param_grid)))
