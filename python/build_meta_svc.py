@@ -8,8 +8,7 @@ Created on Thu Dec 10 14:45:37 2015
 import numpy as np
 import pandas as pd
 from sklearn.svm import SVC
-from sklearn.metrics import roc_auc_score
-from sklearn import cross_validation
+from sklearn.ensemble import BaggingClassifier
 from itertools import product
 import datetime
 
@@ -43,7 +42,11 @@ if __name__ == '__main__':
     
     ## model
     # setup model instances
-    model = SVC(probability = True, random_state= seed_value)
+    model = BaggingClassifier(base_estimator=SVC(probability = True, random_state= seed_value),
+                              n_estimators=16,
+                              n_jobs=8,
+                              max_samples = 10000,
+                              max_features = 0.85)
            
     # parameter grids: LR + range of training subjects to subset to 
     c_vals = [0.01, 0.1, 1, 10]         
@@ -60,7 +63,8 @@ if __name__ == '__main__':
             print "processing parameter combo:", i
             # configure model with j-th combo of parameters
             x = param_grid[i]
-            model.C = x[0]; model.class_weight = x[1]            
+            model.C = x[0]
+            model.class_weight = x[1]
             
             # loop over folds
             for j in range(0,n_folds):
