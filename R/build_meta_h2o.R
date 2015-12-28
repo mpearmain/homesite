@@ -126,6 +126,6 @@ mtrain$QuoteNumber <- id_train
 mtest$QuoteNumber <- id_test
 mtrain$QuoteConversion_Flag <- y
 
-write_csv(mtrain, path = paste("./metafeatures/prval_h2o_", todate, "_data", dataset_version, "_seed", seed_value, ".csv",sep = "" ))
-write_csv(mtest, path = paste("./metafeatures/prfull_h2o_", todate, "_data", dataset_version, "_seed", seed_value, ".csv",sep = "" ))
+write_csv(mtrain, path = paste("./metafeatures/prval_",model_type,"_", todate, "_data", dataset_version, "_seed", seed_value, ".csv",sep = "" ))
+write_csv(mtest, path = paste("./metafeatures/prfull_",model_type,"_", todate, "_data", dataset_version, "_seed", seed_value, ".csv",sep = "" ))
 
