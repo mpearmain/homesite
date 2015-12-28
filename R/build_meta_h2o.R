@@ -120,6 +120,8 @@ for (ii in 1:nrow(param_grid))
 }
 
 ## store complete versions ####
+mtrain <- data.frame(mtrain)
+mtest <- data.frame(mtest)
 mtrain$QuoteNumber <- id_train
 mtest$QuoteNumber <- id_test
 mtrain$QuoteConversion_Flag <- y
