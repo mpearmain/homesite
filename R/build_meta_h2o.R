@@ -5,7 +5,7 @@ require(stringr)
 
 h2oServer <- h2o.init(nthreads=-1, max_mem_size = "14g")
 
-dataset_version <- "kb7"
+dataset_version <- "kb6"
 seed_value <- 132
 model_type <- "h2o"
 todate <- str_replace_all(Sys.Date(), "-","")
@@ -50,7 +50,10 @@ nfolds <- length(unique(xfolds$fold_index))
 # parameter grid
 param_grid <- expand.grid(size1 = c(400, 200),
                           size2 = c(200, 100),
-                          rate_dec = c(1))
+                          inp_d = c(0.01,0.05),
+                          l1_d = c(0.01, 0.05),
+                          l2_d = c(0.01,0.05),
+                          rate_dec = c(0.95,1))
 
 xtrain$target <- factor(y)
 
