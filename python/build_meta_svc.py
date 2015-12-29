@@ -16,8 +16,8 @@ if __name__ == '__main__':
 
     ## settings
     projPath = './'
-    dataset_version = "kb4"
-    model_type = "logreg" 
+    dataset_version = "mp1"
+    model_type = "svc"
     seed_value = 123
     todate = datetime.datetime.now().strftime("%Y%m%d")
     	    

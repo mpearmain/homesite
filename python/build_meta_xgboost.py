@@ -57,7 +57,7 @@ if __name__ == '__main__':
         (10, 6, 0.60, 0.90, 0, 0.0432, 380),
         (3, 8, 0.87, 0.7890, 0, 0.09087, 350),
         (1, 3, 0.789, 0.97, 0, 0.012, 1100),
-        (1, 10, 0.97, 0.95, 0.0001, 0.0347, 700),
+        (1, 10, 0.97, 0.95, 0.0001, 0.0097, 6200),
         (7, 9, 0.53, 0.879, 0.005, 0.019, 900),
         (7, 6, 0.80, 0.54, 0, 0.0215, 1300),
         (7, 3, 0.50, 0.66, 0, 0.08732, 300),
@@ -123,9 +123,7 @@ if __name__ == '__main__':
             mfull = pd.DataFrame(mfull)
             mfull.columns = [model_type + str(k) for k in range(0, mfull.shape[1])]
             mfull['QuoteNumber'] = id_test
-    
 
-            # save the files            
+            # save the files
             mvalid.to_csv(projPath + 'metafeatures/prval_' + model_type + '_' + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '_param' + str(i) + '.csv', index = False, header = True)
             mfull.to_csv(projPath + 'metafeatures/prfull_' + model_type + '_' + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '_param' + str(i) + '.csv', index = False, header = True)
-    
