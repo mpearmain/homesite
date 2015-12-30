@@ -2,6 +2,7 @@
 require(readr)
 require(h2o)
 require(stringr)
+require(caret)
 
 h2oServer <- h2o.init(nthreads=-1, max_mem_size = "14g")
 
