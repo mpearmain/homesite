@@ -166,5 +166,5 @@ clf <- xgb.train(booster = "gbtree",
 prx2 <- predict(clf, x1d)
 
 # combine into the final forecast
-xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = 0.5 * (rank(prx1) + rank(prx2)))
-write_csv(xfor, path = "./submissions/ens_20160101.csv")
+xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = 0.5 * (prx1 + prx2))
+write_csv(xfor, path = "./submissions/ens2_20160101.csv")
