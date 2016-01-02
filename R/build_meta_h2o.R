@@ -5,7 +5,7 @@ require(stringr)
 
 h2oServer <- h2o.init(nthreads=-1, max_mem_size = "14g")
 
-dataset_version <- "kb6"
+dataset_version <- "kb3"
 seed_value <- 132
 model_type <- "h2o"
 todate <- str_replace_all(Sys.Date(), "-","")
