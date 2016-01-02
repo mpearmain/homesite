@@ -44,7 +44,7 @@ nfolds <- length(unique(xfolds$fold_index))
 
 # SFSG # 
 
-## fit dl models ####
+## fit models ####
 # parameter grid
 param_grid <- expand.grid(ntree = c(500, 1250),
                           mtry = c(10,15,25),
@@ -82,7 +82,7 @@ for (ii in 1:nrow(param_grid))
   }
   
   # full version 
-  ranger.model <- ranger(y0 ~ ., data = x0, 
+  ranger.model <- ranger(factor(y) ~ ., data = xtrain, 
                          mtry = param_grid$mtry[ii],
                          num.trees = param_grid$ntree[ii],
                          write.forest = T,
@@ -94,12 +94,16 @@ for (ii in 1:nrow(param_grid))
   pred_full <- predict(ranger.model, xtest)$predictions[,2]
   mtest[,ii] <- pred_full
   
-  
 }
+
+
+
+
 
 ## store complete versions ####
 mtrain <- data.frame(mtrain)
 mtest <- data.frame(mtest)
+colnames(mtrain) <- colnames(mtest) <- paste(model_type, 1:ncol(mtrain), sep = "")
 mtrain$QuoteNumber <- id_train
 mtest$QuoteNumber <- id_test
 mtrain$QuoteConversion_Flag <- y
