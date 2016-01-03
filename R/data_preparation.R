@@ -278,7 +278,7 @@ BuildMP3 <- function() {
   
   rm(xtrain)
   rm(xtest)
-  return(cat("MP1 dataset built"))
+  return(cat("MP3 dataset built"))
 }
 
 BuildMP3()
