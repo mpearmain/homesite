@@ -1,13 +1,11 @@
 ## wd etc ####
 require(readr)
-require(h2o)
+require(ranger)
 require(stringr)
-
-h2oServer <- h2o.init(nthreads=-1, max_mem_size = "14g")
 
 dataset_version <- "kb3"
 seed_value <- 132
-model_type <- "h2o"
+model_type <- "ranger"
 todate <- str_replace_all(Sys.Date(), "-","")
 
 ## functions ####
@@ -46,16 +44,11 @@ nfolds <- length(unique(xfolds$fold_index))
 
 # SFSG # 
 
-## fit dl models ####
+## fit models ####
 # parameter grid
-param_grid <- expand.grid(size1 = c(400, 200),
-                          size2 = c(200, 100),
-                          inp_d = c(0.01,0.05),
-                          l1_d = c(0.01, 0.05),
-                          l2_d = c(0.01,0.05),
-                          rate_dec = c(0.95,1))
-
-xtrain$target <- factor(y)
+param_grid <- expand.grid(ntree = c(500, 1250),
+                          mtry = c(10,15,25),
+                          nsize = c(1,5))
 
 # storage structures 
 mtrain <- array(0, c(nrow(xtrain), nrow(param_grid)))
@@ -65,66 +58,52 @@ xrange <- 1:(ncol(xtrain) - 1)
 # loop over parameters
 for (ii in 1:nrow(param_grid))
 {
-  size1 <- param_grid$size1[ii]
-  size2 <- param_grid$size2[ii]
-  rate_dec <- param_grid$rate_dec[ii]
-  
+ 
   # loop over folds 
   for (jj in 1:nfolds)
   {
     isTrain <- which(xfolds$fold_index != jj)
     isValid <- which(xfolds$fold_index == jj)
-    x0 <- xtrain[isTrain,]; x1 <- xtrain[isValid,-297]
-    # convert to H2O format
-    x0.hex <- as.h2o(x0); x1.hex <- as.h2o(x1)
-    xseed <- seed_value
+    x0 <- xtrain[isTrain,]; x1 <- xtrain[isValid,]
+    y0 <- factor(y)[isTrain]; y1 <- factor(y)[isValid]
+    
+    ranger.model <- ranger(y0 ~ ., data = x0, 
+                           mtry = param_grid$mtry[ii],
+                           num.trees = param_grid$ntree[ii],
+                           write.forest = T,
+                           probability = T,
+                           min.node.size = param_grid$nsize[ii],
+                           seed = seed_value
+                           )
     
     
-    dl.model <- h2o.deeplearning(
-      # data specifications
-      x = xrange, y = max(xrange)+1, training_frame = x0.hex, 
-      autoencoder = FALSE, 
-      # network structure: activation and geometry
-      activation = "RectifierWithDropout",
-      hidden = c(size1, size2), epochs = 25, 
-      input_dropout_ratio = 0.05, hidden_dropout_ratios = c(0.05, 0.02), 
-      # parameters of the optimization process
-      rho = 0.99, epsilon = 1e-08, rate = 0.005,
-      rate_annealing = 1e-06, rate_decay = rate_dec, momentum_start = 0.5,
-      l1 = 0, l2 = 0,  loss = c("CrossEntropy")
-    )
-    
-    pred_valid <- as.data.frame(predict(dl.model, x1.hex))$p1
+    pred_valid <- predict(ranger.model, x1)$predictions[,2]
     mtrain[isValid,ii] <- pred_valid
   }
- 
-  # full version 
-  x0.hex <- as.h2o(xtrain); x1.hex <- as.h2o(xtest)
-  xseed <- seed_value
   
-  dl.model <- h2o.deeplearning(
-    # data specifications
-    x = xrange, y = max(xrange)+1, training_frame = x0.hex, 
-    autoencoder = FALSE, 
-    # network structure: activation and geometry
-    activation = "RectifierWithDropout",
-    hidden = c(size1, size2), epochs = 25, 
-    input_dropout_ratio = 0.05, hidden_dropout_ratios = c(0.05, 0.02), 
-    # parameters of the optimization process
-    rho = 0.99, epsilon = 1e-08, rate = 0.005,
-    rate_annealing = 1e-06, rate_decay = rate_dec, momentum_start = 0.5,
-    l1 = 0, l2 = 0,  loss = c("CrossEntropy")
+  # full version 
+  ranger.model <- ranger(factor(y) ~ ., data = xtrain, 
+                         mtry = param_grid$mtry[ii],
+                         num.trees = param_grid$ntree[ii],
+                         write.forest = T,
+                         probability = T,
+                         min.node.size = param_grid$nsize[ii],
+                         seed = seed_value
   )
   
-  pred_full <- as.data.frame(predict(dl.model, x1.hex))$p1
+  pred_full <- predict(ranger.model, xtest)$predictions[,2]
   mtest[,ii] <- pred_full
-  
-  
+  msg(ii)
 }
+
+
+
+
 
 ## store complete versions ####
 mtrain <- data.frame(mtrain)
 mtest <- data.frame(mtest)
+colnames(mtrain) <- colnames(mtest) <- paste(model_type, 1:ncol(mtrain), sep = "")
 mtrain$QuoteNumber <- id_train
 mtest$QuoteNumber <- id_test
 mtrain$QuoteConversion_Flag <- y
