@@ -3,7 +3,7 @@ require(readr)
 require(ranger)
 require(stringr)
 
-dataset_version <- "kb4"
+dataset_version <- "kb5"
 seed_value <- 132
 model_type <- "ranger"
 todate <- str_replace_all(Sys.Date(), "-","")
@@ -46,9 +46,9 @@ nfolds <- length(unique(xfolds$fold_index))
 
 ## fit models ####
 # parameter grid
-param_grid <- expand.grid(ntree = c(1500),
-                          mtry = c(10,15,25),
-                          nsize = c(5,10))
+param_grid <- expand.grid(ntree = c(1750),
+                          mtry = c(30, 50),
+                          nsize = c(10,25))
 
 # storage structures 
 mtrain <- array(0, c(nrow(xtrain), nrow(param_grid)))
