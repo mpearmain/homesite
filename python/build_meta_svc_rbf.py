@@ -16,8 +16,8 @@ if __name__ == '__main__':
 
     ## settings
     projPath = './'
-    dataset_version = "kb4"
-    model_type = "logreg"
+    dataset_version = "mp3"
+    model_type = "svc-rbf"
     seed_value = 123
     todate = datetime.datetime.now().strftime("%Y%m%d")
     	    
@@ -42,8 +42,8 @@ if __name__ == '__main__':
     
     ## model
     # setup model instances
-    model = BaggingClassifier(base_estimator=SVC(probability = True, random_state= seed_value),
-                              n_estimators=16,
+    model = BaggingClassifier(base_estimator=SVC(gamma=2, probability = True, random_state= seed_value),
+                              n_estimators=32,
                               n_jobs=8,
                               max_samples = 10000,
                               max_features = 0.85)
