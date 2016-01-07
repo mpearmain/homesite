@@ -142,44 +142,36 @@ xfolds <- xfolds[,c("QuoteNumber", "fold_index")]
 nfolds <- length(unique(xfolds$fold_index))
 
 
-storage_matrix <- array(0, c(nfolds, 8))
+storage_matrix <- array(0, c(nfolds, 4))
 
 xMed <- apply(xvalid,1,median)
 xMin <- apply(xvalid,1,min)
 xMax <- apply(xvalid,1,max)
-xvalid$xmed <- xMed
-xvalid$xmax <- xMax
-xvalid$xmin <- xMin
+xvalid$xmed <- xMed; xvalid$xmax <- xMax; xvalid$xmin <- xMin
 
 xMed <- apply(xfull,1,median)
 xMin <- apply(xfull,1,min)
 xMax <- apply(xfull,1,max)
-xfull$xmed <- xMed
-xfull$xmax <- xMax
-xfull$xmin <- xMin
+xfull$xmed <- xMed; xfull$xmax <- xMax; xfull$xmin <- xMin
 
 for (ii in 1:nfolds)
 {
+  # mix with glmnet 
   isTrain <- which(xfolds$fold_index != ii)
   isValid <- which(xfolds$fold_index == ii)
   x0 <- xvalid[isTrain,];   x1 <- xvalid[isValid,]
   y0 <- y[isTrain];  y1 <- y[isValid]
-#   x0 <- xvalid[-isValid,]; x1 <- xvalid[isValid,]
-#   y0 <- y[-isValid]; y1 <- y[isValid]
-  
-  mod0 <- glmnet(x = as.matrix(x0), y = y0, alpha = 0)
-  prx <- predict(mod0,as.matrix(x1))
-  prx1 <- prx[,ncol(prx)]
-  
+  prx1 <- y1 * 0
+  for (jj in 1:11)
+  {
+    mod0 <- glmnet(x = as.matrix(x0), y = y0, alpha = (jj-1) * 0.1)
+    prx <- predict(mod0,as.matrix(x1))  
+    prx <- prx[,ncol(prx)]
+    # storage_matrix[ii,jj] <- auc(y1,prx1)
+    prx1 <- prx1 + prx
+  }
   storage_matrix[ii,1] <- auc(y1,prx1)
-
-  mod0 <- glmnet(x = as.matrix(x0), y = y0, alpha = 1)
-  prx <- predict(mod0,as.matrix(x1))
-  prx2 <- prx[,ncol(prx)]
-  
-  storage_matrix[ii,2] <- auc(y1,prx2)
-  storage_matrix[ii,3] <- auc(y1,prx2 + prx1)
-  
+ 
   x0d <- xgb.DMatrix(as.matrix(x0), label = y0)
   x1d <- xgb.DMatrix(as.matrix(x1), label = y1)
   
@@ -189,38 +181,37 @@ for (ii in 1:nfolds)
                    maximize = TRUE, 
                    print.every.n = 50,
                    # early.stop.round = 25,
-                   nrounds = 250,
-                   eta = 0.01,
-                   max.depth = 15, 
-                   colsample_bytree = 0.85,
+                   nrounds = 250, eta = 0.01,
+                   max.depth = 15,  colsample_bytree = 0.85,
                    subsample = 0.8,
-                   data = x0d, 
-                   objective = "binary:logistic",
-                   watchlist = watch, 
-                   eval_metric = "auc",
+                   data = x0d, objective = "binary:logistic",
+                   watchlist = watch,  eval_metric = "auc",
                    gamma= 0.05)
   
-  prx3 <- predict(clf, x1d)
-  storage_matrix[ii,3] <- auc(y1,prx3)
+  prx2 <- predict(clf, x1d)
+  storage_matrix[ii,2] <- auc(y1,prx2)
+  prx1 <- rank(prx1)/length(prx1)
+  prx2 <- rank(prx2)/length(prx2)
   
-  storage_matrix[ii,4] <- auc(y1, prx1 + prx2)
-  storage_matrix[ii,5] <- auc(y1, prx1 + prx3)
-  storage_matrix[ii,6] <- auc(y1, 0.5 * (prx1 + prx2) + prx3)
+  storage_matrix[ii,3] <- auc(y1, 0.5 * (prx1 + prx2))
+  storage_matrix[ii,4] <- auc(y1, sqrt(prx1 * prx2))
   
-  a <- apply(x1,2,function(s) auc(y1,s))
-  storage_matrix[ii,7] <- max(a)
-  storage_matrix[ii,8] <- which.max(a)
+  msg(ii)
 }
 
 ## build final prediction
 
-mod0 <- glmnet(x = as.matrix(xvalid), y = y, alpha = 0)
-prx <- predict(mod0,as.matrix(xfull))
-prx1 <- prx[,ncol(prx)]
+prx1 <- rep( 0, nrow(xfull))
+for (jj in 1:11)
+{
+  mod0 <- glmnet(x = as.matrix(xvalid), y = y, alpha = (jj-1) * 0.1)
+  prx <- predict(mod0,as.matrix(xfull))  
+  prx <- prx[,ncol(prx)]
+  # storage_matrix[ii,jj] <- auc(y1,prx1)
+  prx1 <- prx1 + prx
+}
+prx1 <- rank(prx1)/length(prx1)
 
-mod0 <- glmnet(x = as.matrix(xvalid), y = y, alpha = 1)
-prx <- predict(mod0,as.matrix(xfull))
-prx2 <- prx[,ncol(prx)]
 
 x0d <- xgb.DMatrix(as.matrix(xvalid), label = y)
 x1d <- xgb.DMatrix(as.matrix(xfull))
@@ -241,8 +232,9 @@ clf <- xgb.train(booster = "gbtree",
                  gamma= 0.05)
 
 
-prx3 <- predict(clf, x1d)
+prx2 <- predict(clf, x1d)
+prx2 <- rank(prx2)/length(prx2)
 
 # combine into the final forecast
 xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = 0.5 * (prx1 + prx2))
-write_csv(xfor, path = "./submissions/ens_20160105.csv")
+write_csv(xfor, path = paste("./submissions/ens_",todate,".csv", sep = ""))
