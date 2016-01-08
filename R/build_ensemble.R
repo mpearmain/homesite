@@ -4,6 +4,8 @@ require(stringr)
 require(glmnet)
 require(caret)
 require(xgboost)
+require(nnet)
+require(ranger)
 
 seed_value <- 132
 todate <- str_replace_all(Sys.Date(), "-","")
@@ -208,11 +210,12 @@ for (ii in 1:nfolds)
          min.node.size = 10, seed = seed_value
   )
   prx5 <- predict(rf0, x1)$predictions[,2]
+  xvalid2[isValid,5] <- prx5
   
   msg(ii)
 }
 
-## build final prediction
+## build prediction on full set
 # glmnet
 prx1 <- rep( 0, nrow(xfull))
 for (jj in 1:11)
@@ -265,6 +268,14 @@ prx5 <- predict(rf0, xfull)$predictions[,2]
 xfull2[,5] <- prx5
 
 ## store the final ensemble forecasts ####
-# combine into the final forecast
-xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = 0.5 * (prx1 + prx2))
-write_csv(xfor, path = paste("./submissions/ens_",todate,".csv", sep = ""))
+# SFSG # 
+
+# find the best combination of mixers
+
+# evaluate performance across folds
+
+# construct forecast
+# xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = 0.5 * (prx1 + prx2))
+
+# store
+# write_csv(xfor, path = paste("./submissions/ens_",todate,".csv", sep = ""))
