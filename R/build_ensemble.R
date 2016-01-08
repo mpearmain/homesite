@@ -68,10 +68,12 @@ buildEnsemble <- function(parVec, xset, yvec)
       best.track <- c(best.track, max(trackScoreHill))
       hillNames <- c(hillNames,names(best))
       hill.df <- data.frame(hill.df, xx[,best])
+      msg(ee)
     }
     
     ww <- summary(factor(hillNames))
     arMat[bb, names(ww)] <- ww
+    msg(paste("blend: ",bb, sep = ""))
   }
   
   wgt <- colSums(arMat)/sum(arMat)
@@ -125,34 +127,30 @@ rm(xval)
 
 ## build ensemble model ####
 
+# prepare the data
 y <- xvalid$QuoteConversion_Flag; xvalid$QuoteConversion_Flag <- NULL
 id_valid <- xvalid$QuoteNumber; xvalid$QuoteNumber <- NULL
 id_full <- xfull$QuoteNumber; xfull$QuoteNumber <- NULL
 
 # folds for cv evaluation
-# xfolds <- createDataPartition(y, 
-#                     times = 20,
-#                     p = 0.1,
-#                     list = TRUE,
-#                     groups = min(5, length(y)))
-# 
-# nfolds <- length(xfolds)
 xfolds <- read_csv("./input/xfolds.csv"); xfolds$fold_index <- xfolds$fold5
 xfolds <- xfolds[,c("QuoteNumber", "fold_index")]
 nfolds <- length(unique(xfolds$fold_index))
 
+# storage for results
+storage_matrix <- array(0, c(nfolds, 5))
 
-storage_matrix <- array(0, c(nfolds, 4))
+# storage for level 2 forecasts 
+xvalid2 <- array(0, c(nrow(xvalid),5))
+xfull2 <- array(0, c(nrow(xfull),5))
 
-xMed <- apply(xvalid,1,median)
-xMin <- apply(xvalid,1,min)
-xMax <- apply(xvalid,1,max)
-xvalid$xmed <- xMed; xvalid$xmax <- xMax; xvalid$xmin <- xMin
-
-xMed <- apply(xfull,1,median)
-xMin <- apply(xfull,1,min)
-xMax <- apply(xfull,1,max)
-xfull$xmed <- xMed; xfull$xmax <- xMax; xfull$xmin <- xMin
+# amend the data
+xMed <- apply(xvalid,1,median); xMin <- apply(xvalid,1,min)
+xMax <- apply(xvalid,1,max); xMad <- apply(xvalid,1,mad)
+xvalid$xmed <- xMed; xvalid$xmax <- xMax; xvalid$xmin <- xMin; xvalid$xmad <- xMad
+xMed <- apply(xfull,1,median); xMin <- apply(xfull,1,min)
+xMax <- apply(xfull,1,max); xMad <- apply(xfull,1,mad)
+xfull$xmed <- xMed; xfull$xmax <- xMax; xfull$xmin <- xMin; xfull$xmad <- xMad
 
 for (ii in 1:nfolds)
 {
@@ -171,16 +169,15 @@ for (ii in 1:nfolds)
     prx1 <- prx1 + prx
   }
   storage_matrix[ii,1] <- auc(y1,prx1)
- 
+  xvalid2[isValid,1] <- prx1
+  
+  # mix with xgboost
   x0d <- xgb.DMatrix(as.matrix(x0), label = y0)
   x1d <- xgb.DMatrix(as.matrix(x1), label = y1)
-  
   watch <- list(valid = x1d)
-  
   clf <- xgb.train(booster = "gbtree",
                    maximize = TRUE, 
                    print.every.n = 50,
-                   # early.stop.round = 25,
                    nrounds = 250, eta = 0.01,
                    max.depth = 15,  colsample_bytree = 0.85,
                    subsample = 0.8,
@@ -190,17 +187,33 @@ for (ii in 1:nfolds)
   
   prx2 <- predict(clf, x1d)
   storage_matrix[ii,2] <- auc(y1,prx2)
-  prx1 <- rank(prx1)/length(prx1)
-  prx2 <- rank(prx2)/length(prx2)
+  xvalid2[isValid,2] <- prx2
   
-  storage_matrix[ii,3] <- auc(y1, 0.5 * (prx1 + prx2))
-  storage_matrix[ii,4] <- auc(y1, sqrt(prx1 * prx2))
+  # mix with nnet 
+  net0 <- nnet(factor(y0) ~ ., data = x0, size = 10, MaxNWts = 10000)
+  prx3 <- predict(net0, x1)
+  storage_matrix[ii,3] <- auc(y1,prx3)
+  xvalid2[isValid,3] <- prx3
+  
+  # mix with hillclimbing
+  par0 <- buildEnsemble(c(1,8,5,0.3), x0,y0)
+  prx4 <- as.matrix(x1) %*% as.matrix(par0)
+  storage_matrix[ii,4] <- auc(y1,prx4)
+  xvalid2[isValid,4] <- prx4
+  
+  # mix with random forest
+  rf0 <- ranger(factor(y0) ~ ., data = x0, 
+         mtry = 25, num.trees = 250,
+         write.forest = T, probability = T,
+         min.node.size = 10, seed = seed_value
+  )
+  prx5 <- predict(rf0, x1)$predictions[,2]
   
   msg(ii)
 }
 
 ## build final prediction
-
+# glmnet
 prx1 <- rep( 0, nrow(xfull))
 for (jj in 1:11)
 {
@@ -211,30 +224,47 @@ for (jj in 1:11)
   prx1 <- prx1 + prx
 }
 prx1 <- rank(prx1)/length(prx1)
+xfull2[,1] <- prx1
 
-
+# xgboost
 x0d <- xgb.DMatrix(as.matrix(xvalid), label = y)
 x1d <- xgb.DMatrix(as.matrix(xfull))
-
 clf <- xgb.train(booster = "gbtree",
                  maximize = TRUE, 
                  print.every.n = 50,
                  #early.stop.round = 25,
-                 nrounds = 250,
-                 eta = 0.01,
-                 max.depth = 15, 
-                 colsample_bytree = 0.85,
-                 subsample = 0.8,
-                 data = x0d, 
+                 nrounds = 250,  eta = 0.01,
+                 max.depth = 15, colsample_bytree = 0.85,
+                 subsample = 0.8, data = x0d, 
                  objective = "binary:logistic",
                  # watchlist = watch, 
-                 eval_metric = "auc",
-                 gamma= 0.05)
-
+                 eval_metric = "auc",gamma= 0.05)
 
 prx2 <- predict(clf, x1d)
 prx2 <- rank(prx2)/length(prx2)
+xfull2[,2] <- prx2
 
+
+# mix with nnet 
+net0 <- nnet(factor(y) ~ ., data = xvalid, size = 10, MaxNWts = 10000)
+prx3 <- predict(net0, xfull)
+xfull2[,3] <- prx3
+
+# mix with hillclimbing
+par0 <- buildEnsemble(c(1,8,5,0.3), xvalid,y)
+prx4 <- as.matrix(xfull) %*% as.matrix(par0)
+xfull2[,4] <- prx4
+
+# mix with ranger
+rf0 <- ranger(factor(y) ~ ., data = xvalid, 
+              mtry = 25, num.trees = 250,
+              write.forest = T, probability = T,
+              min.node.size = 10, seed = seed_value
+)
+prx5 <- predict(rf0, xfull)$predictions[,2]
+xfull2[,5] <- prx5
+
+## store the final ensemble forecasts ####
 # combine into the final forecast
 xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = 0.5 * (prx1 + prx2))
 write_csv(xfor, path = paste("./submissions/ens_",todate,".csv", sep = ""))
