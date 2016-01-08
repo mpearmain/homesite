@@ -44,9 +44,9 @@ if __name__ == '__main__':
     ## model
     # setup model instances
     model = BaggingClassifier(base_estimator=SVC(probability = True, random_state= seed_value),
-                              n_estimators=7,
-                              n_jobs=7,
-                              max_samples = 10000,
+                              n_estimators=8,
+                              n_jobs=8,
+                              max_samples = 20000,
                               max_features = 0.9)
            
     # parameter grids: LR + range of training subjects to subset to 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                 # fit the model on observations associated with subject whichSubject in this fold
                 model.fit(x0, y0)
                 mvalid[idx1,i] = model.predict_proba(x1)[:,1]
-                print "AUC validation", auc(y1, model.predict_proba(x1)[:,1])
+                print "AUC validation", auc(y1, mvalid[idx1,i])
                 
             # fit on complete dataset
             model.fit(xtrain, ytrain)
