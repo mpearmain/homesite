@@ -274,30 +274,31 @@ rm(par0, net0, mod0,mod_class, clf,x0, x1)
 # SFSG # 
 
 # evaluate performance across folds
-storage2 <- array(0, c(nfolds,15))
+storage2 <- array(0, c(nfolds,8))
 for (ii in 1:nfolds)
 {
   isTrain <- which(xfolds$fold_index != ii)
   isValid <- which(xfolds$fold_index == ii)
-  x0 <- apply(xvalid2[isTrain,],2,rank);   x1 <- apply(xvalid2[isValid,],2,rank)
+  x0 <- apply(xvalid2[isTrain,],2,rank)/length(isTrain)
+  x1 <- apply(xvalid2[isValid,],2,rank)/length(isValid)
+  x0 <- data.frame(x0)
+  x1 <- data.frame(x1)
   y0 <- y[isTrain];  y1 <- y[isValid]
   
-  storage2[ii,1] <- auc(y1, rowMeans(x1[,-1]))
-  storage2[ii,2] <- auc(y1, rowMeans(x1[,-2]))
-  storage2[ii,3] <- auc(y1, rowMeans(x1[,-3]))
-  storage2[ii,4] <- auc(y1, rowMeans(x1[,-4]))
-  storage2[ii,5] <- auc(y1, rowMeans(x1[,-5]))
-  
-  storage2[ii,6] <- auc(y1, rowMeans(x1[,-c(1,2)]))
-  storage2[ii,7] <- auc(y1, rowMeans(x1[,-c(1,3)]))
-  storage2[ii,8] <- auc(y1, rowMeans(x1[,-c(1,4)]))
-  storage2[ii,9] <- auc(y1, rowMeans(x1[,-c(1,5)]))
-  storage2[ii,10] <- auc(y1, rowMeans(x1[,-c(2,3)]))
-  storage2[ii,11] <- auc(y1, rowMeans(x1[,-c(2,4)]))
-  storage2[ii,12] <- auc(y1, rowMeans(x1[,-c(2,5)]))
-  storage2[ii,13] <- auc(y1, rowMeans(x1[,-c(3,4)]))
-  storage2[ii,14] <- auc(y1, rowMeans(x1[,-c(3,5)]))
-  storage2[ii,15] <- auc(y1, rowMeans(x1[,-c(4,5)]))
+  storage2[ii,1] <- auc(y1, rowMeans(x1[,c(1,2)]))
+  storage2[ii,2] <- auc(y1, rowMeans(x1[,c(1,2,3)]))
+  par0 <- buildEnsemble(c(1,10, 5,0.6), x0,y0)
+  storage2[ii,3] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
+  par0 <- buildEnsemble(c(1,15, 5,0.6), x0,y0)
+  storage2[ii,4] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
+  x0 <- log(x0)
+  x1 <- log(x1)
+  storage2[ii,5] <- auc(y1, rowMeans(x1[,c(1,2)]))
+  storage2[ii,6] <- auc(y1, rowMeans(x1[,c(1,2,3)]))
+  par0 <- buildEnsemble(c(1,10, 5,0.6), x0,y0)
+  storage2[ii,7] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
+  par0 <- buildEnsemble(c(1,15,5,0.6), x0,y0)
+  storage2[ii,8] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
   
 }
 
@@ -305,9 +306,13 @@ for (ii in 1:nfolds)
 # find the best combination of mixers
 xvalid2 <- apply(xvalid2,2,rank)/nrow(xvalid2)
 xfull2 <- apply(xfull2,2,rank)/nrow(xfull2)
+xvalid2 <- data.frame(xvalid2)
+xfull2 <- data.frame(xfull2)
 
 # construct forecast
-xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = rowMeans(xfull2[,1:3]))
+par0 <- buildEnsemble(c(1,15, 5,0.6), xvalid2,y)
+prx <- as.matrix(xfull2) %*% as.matrix(par0)
+xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = prx)
 
 # store
-write_csv(xfor, path = paste("./submissions/ens_",todate,".csv", sep = ""))
+write_csv(xfor, path = paste("./submissions/ens2_",todate,".csv", sep = ""))
