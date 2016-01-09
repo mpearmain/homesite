@@ -86,7 +86,7 @@ clf <- xgb.train(booster = "gbtree",
                  watchlist = watch, 
                  eval_metric = "auc")
 
-pred <- predict(clf, hash_test)
+pred <- predict(clf, x1d)
 
 submission[, QuoteConversion_Flag := pred]
 write.csv(submission, 'output/xgb_binary.csv', row.names = FALSE)
