@@ -299,7 +299,7 @@ for (ii in 1:nfolds)
   storage2[ii,7] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
   par0 <- buildEnsemble(c(1,15,5,0.6), x0,y0)
   storage2[ii,8] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
-  
+
 }
 
 
