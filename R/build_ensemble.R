@@ -274,7 +274,7 @@ rm(par0, net0, mod0,mod_class, clf,x0, x1)
 # SFSG # 
 
 # evaluate performance across folds
-storage2 <- array(0, c(nfolds,8))
+storage2 <- array(0, c(nfolds,5))
 for (ii in 1:nfolds)
 {
   isTrain <- which(xfolds$fold_index != ii)
@@ -285,21 +285,11 @@ for (ii in 1:nfolds)
   x1 <- data.frame(x1)
   y0 <- y[isTrain];  y1 <- y[isValid]
   
-  storage2[ii,1] <- auc(y1, rowMeans(x1[,c(1,2)]))
-  storage2[ii,2] <- auc(y1, rowMeans(x1[,c(1,2,3)]))
-  par0 <- buildEnsemble(c(1,10, 5,0.6), x0,y0)
-  storage2[ii,3] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
   par0 <- buildEnsemble(c(1,15, 5,0.6), x0,y0)
-  storage2[ii,4] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
-  x0 <- log(x0)
-  x1 <- log(x1)
-  storage2[ii,5] <- auc(y1, rowMeans(x1[,c(1,2)]))
-  storage2[ii,6] <- auc(y1, rowMeans(x1[,c(1,2,3)]))
-  par0 <- buildEnsemble(c(1,10, 5,0.6), x0,y0)
-  storage2[ii,7] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
-  par0 <- buildEnsemble(c(1,15,5,0.6), x0,y0)
-  storage2[ii,8] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
+  storage2[ii,1] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
 
+  par0 <- buildEnsemble(c(1,20, 5,0.6), x0,y0)
+  storage2[ii,2] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
 }
 
 
