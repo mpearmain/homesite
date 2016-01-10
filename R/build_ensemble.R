@@ -128,6 +128,7 @@ for (ii in 2:length(xlist_val))
 rm(xval)
 
 ## build ensemble model ####
+# TODO: calibrate optimal parameters for each of the mixers?
 
 # prepare the data
 y <- xvalid$QuoteConversion_Flag; xvalid$QuoteConversion_Flag <- NULL
@@ -180,7 +181,7 @@ for (ii in 1:nfolds)
   clf <- xgb.train(booster = "gbtree",
                    maximize = TRUE, 
                    print.every.n = 50,
-                   nrounds = 250, eta = 0.01,
+                   nrounds = 350, eta = 0.007,
                    max.depth = 15,  colsample_bytree = 0.85,
                    subsample = 0.8,
                    data = x0d, objective = "binary:logistic",
@@ -192,24 +193,25 @@ for (ii in 1:nfolds)
   xvalid2[isValid,2] <- prx2
   
   # mix with nnet 
-  net0 <- nnet(factor(y0) ~ ., data = x0, size = 10, MaxNWts = 10000)
+  net0 <- nnet(factor(y0) ~ ., data = x0, size = 25, MaxNWts = 10000, decay = 0.01)
   prx3 <- predict(net0, x1)
   storage_matrix[ii,3] <- auc(y1,prx3)
   xvalid2[isValid,3] <- prx3
   
   # mix with hillclimbing
-  par0 <- buildEnsemble(c(1,8,5,0.3), x0,y0)
+  par0 <- buildEnsemble(c(1,15,5,0.5), x0,y0)
   prx4 <- as.matrix(x1) %*% as.matrix(par0)
   storage_matrix[ii,4] <- auc(y1,prx4)
   xvalid2[isValid,4] <- prx4
   
   # mix with random forest
   rf0 <- ranger(factor(y0) ~ ., data = x0, 
-         mtry = 25, num.trees = 250,
+         mtry = 25, num.trees = 350,
          write.forest = T, probability = T,
          min.node.size = 10, seed = seed_value
   )
   prx5 <- predict(rf0, x1)$predictions[,2]
+  storage_matrix[ii,5] <- auc(y1,prx5)
   xvalid2[isValid,5] <- prx5
   
   msg(ii)
@@ -235,9 +237,8 @@ x1d <- xgb.DMatrix(as.matrix(xfull))
 clf <- xgb.train(booster = "gbtree",
                  maximize = TRUE, 
                  print.every.n = 50,
-                 #early.stop.round = 25,
-                 nrounds = 250,  eta = 0.01,
-                 max.depth = 15, colsample_bytree = 0.85,
+                 nrounds = 350, eta = 0.007,
+                 max.depth = 15,  colsample_bytree = 0.85,
                  subsample = 0.8, data = x0d, 
                  objective = "binary:logistic",
                  # watchlist = watch, 
@@ -247,20 +248,19 @@ prx2 <- predict(clf, x1d)
 prx2 <- rank(prx2)/length(prx2)
 xfull2[,2] <- prx2
 
-
 # mix with nnet 
-net0 <- nnet(factor(y) ~ ., data = xvalid, size = 10, MaxNWts = 10000)
+net0 <- nnet(factor(y) ~ ., data = xvalid, size = 25, MaxNWts = 10000, decay = 0.01)
 prx3 <- predict(net0, xfull)
 xfull2[,3] <- prx3
 
 # mix with hillclimbing
-par0 <- buildEnsemble(c(1,8,5,0.3), xvalid,y)
+par0 <- buildEnsemble(c(1,15,5,0.5), xvalid,y)
 prx4 <- as.matrix(xfull) %*% as.matrix(par0)
 xfull2[,4] <- prx4
 
 # mix with ranger
 rf0 <- ranger(factor(y) ~ ., data = xvalid, 
-              mtry = 25, num.trees = 250,
+              mtry = 25, num.trees = 350,
               write.forest = T, probability = T,
               min.node.size = 10, seed = seed_value
 )
@@ -315,4 +315,4 @@ prx <- as.matrix(xfull2) %*% as.matrix(par0)
 xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = prx)
 
 # store
-write_csv(xfor, path = paste("./submissions/ens2_",todate,".csv", sep = ""))
+write_csv(xfor, path = paste("./submissions/ens_",todate,".csv", sep = ""))
