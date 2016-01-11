@@ -35,7 +35,6 @@ y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
 id_train <- xtrain$QuoteNumber
 id_test <- xtest$QuoteNumber
 xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
-xtrain$SalesField8 <- xtest$SalesField8 <- NULL
 
 # division into folds: 5-fold
 xfolds <- read_csv("./input/xfolds.csv"); xfolds$fold_index <- xfolds$fold5
