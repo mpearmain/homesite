@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Dec 10 10:44:27 2015
 
@@ -61,7 +60,7 @@ if __name__ == '__main__':
     
     # parameter grids
     drop_vals = [0.01, 0.1, 0.25]         
-    dec_vals = [0.995, 0.95]                               
+    dec_vals = [0.995, 0.9]                               
     lr_vals = [1, 0.5, 0.25, 0.01]      
     reg_vals = [1e-5,1e-3]                          
     lay_vals = [1,2]
