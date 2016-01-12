@@ -193,13 +193,13 @@ for (ii in 1:nfolds)
   xvalid2[isValid,2] <- prx2
   
   # mix with nnet 
-  net0 <- nnet(factor(y0) ~ ., data = x0, size = 25, MaxNWts = 10000, decay = 0.01)
+  net0 <- nnet(factor(y0) ~ ., data = x0, size = 40, MaxNWts = 20000, decay = 0.02)
   prx3 <- predict(net0, x1)
   storage_matrix[ii,3] <- auc(y1,prx3)
   xvalid2[isValid,3] <- prx3
-  
+
   # mix with hillclimbing
-  par0 <- buildEnsemble(c(1,15,5,0.5), x0,y0)
+  par0 <- buildEnsemble(c(1,15,5,0.6), x0,y0)
   prx4 <- as.matrix(x1) %*% as.matrix(par0)
   storage_matrix[ii,4] <- auc(y1,prx4)
   xvalid2[isValid,4] <- prx4
@@ -249,12 +249,12 @@ prx2 <- rank(prx2)/length(prx2)
 xfull2[,2] <- prx2
 
 # mix with nnet 
-net0 <- nnet(factor(y) ~ ., data = xvalid, size = 25, MaxNWts = 10000, decay = 0.01)
+net0 <- nnet(factor(y) ~ ., data = xvalid, size = 40, MaxNWts = 20000, decay = 0.02)
 prx3 <- predict(net0, xfull)
 xfull2[,3] <- prx3
 
 # mix with hillclimbing
-par0 <- buildEnsemble(c(1,15,5,0.5), xvalid,y)
+par0 <- buildEnsemble(c(1,15,5,0.6), xvalid,y)
 prx4 <- as.matrix(xfull) %*% as.matrix(par0)
 xfull2[,4] <- prx4
 
