@@ -51,7 +51,7 @@ if __name__ == '__main__':
            
     # parameter grids: LR + range of training subjects to subset to 
     c_vals = [0.1, 1, 10]
-    g_vals = [2, 5, 10]
+    g_vals = [1, 2, 5]
     c_weights = ['auto']
     param_grid = tuple([c_vals, c_weights, g_vals])
     param_grid = list(product(*param_grid))
@@ -82,7 +82,6 @@ if __name__ == '__main__':
                 # fit the model on observations associated with subject whichSubject in this fold
                 model.fit(x0, y0)
                 mvalid[idx1,i] = model.predict_proba(x1)[:,1]
-                print "AUC validation", auc(y1, mvalid[idx1,i])
                 
             # fit on complete dataset
             model.fit(xtrain, ytrain)

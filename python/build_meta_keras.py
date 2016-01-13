@@ -26,8 +26,8 @@ import datetime
 if __name__ == '__main__':
 
     ## settings
-    projPath = '/Users/konrad/Documents/projects/homesite/' 
-    dataset_version = "kb5r3"
+    projPath = './' 
+    dataset_version = "kb5"
     model_type = "keras" 
     seed_value = 123
     todate = datetime.datetime.now().strftime("%Y%m%d")
