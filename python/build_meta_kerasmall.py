@@ -73,20 +73,20 @@ if __name__ == '__main__':
     
     ## build 2nd level forecasts
     for i in range(len(param_grid)):        
-            print "processing parameter combo:", param_grid
-            # configure model with j-th combo of parameters
-            x = param_grid[i]
-            model.add(Dense(dims * x[4], input_shape=(dims,),W_regularizer=l2(x[3])))
-            #model.add(PReLU())
-            model.add(BatchNormalization())
-            model.add(Dropout(x[0]))
-            model.add(Dense(nb_classes))
-            model.add(Activation('softmax'))
-            opt=Adadelta(lr=x[2],decay=x[1],epsilon=1e-5)
-            model.compile(loss='binary_crossentropy', optimizer=opt)
-            
+            print "processing parameter combo:", param_grid[i]
             # loop over folds
+            # Recompile model on each fold
             for j in range(0,n_folds):
+                # configure model with j-th combo of parameters
+                x = param_grid[i]
+                model.add(Dense(dims * x[4], input_shape=(dims,),W_regularizer=l2(x[3])))
+                #model.add(PReLU())
+                model.add(BatchNormalization())
+                model.add(Dropout(x[0]))
+                model.add(Dense(nb_classes))
+                model.add(Activation('softmax'))
+                opt=Adadelta(lr=x[2],decay=x[1],epsilon=1e-5)
+                model.compile(loss='binary_crossentropy', optimizer=opt)
                 idx0 = np.where(fold_index != j)
                 idx1 = np.where(fold_index == j)
                 x0 = np.array(xtrain)[idx0,:][0]; x1 = np.array(xtrain)[idx1,:][0]
@@ -97,7 +97,18 @@ if __name__ == '__main__':
                 model.fit(x0, y00, nb_epoch=20, batch_size=1000)
                 mvalid[idx1,i] = model.predict_proba(x1)[:,0]
                 print "finished fold:", j
-                
+
+            # configure model with j-th combo of parameters
+            x = param_grid[i]
+            model.add(Dense(dims * x[4], input_shape=(dims,),W_regularizer=l2(x[3])))
+            #model.add(PReLU())
+            model.add(BatchNormalization())
+            model.add(Dropout(x[0]))
+            model.add(Dense(nb_classes))
+            model.add(Activation('softmax'))
+            opt=Adadelta(lr=x[2],decay=x[1],epsilon=1e-5)
+            model.compile(loss='binary_crossentropy', optimizer=opt)
+
             # fit on complete dataset
             ytrain0 = np.zeros((xtrain.shape[0],2))
             ytrain0[:,0] = ytrain; ytrain0[:,1] = 1- ytrain
