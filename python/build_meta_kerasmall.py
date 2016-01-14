@@ -26,8 +26,8 @@ import datetime
 if __name__ == '__main__':
 
     ## settings
-    projPath = '/Users/konrad/Documents/projects/homesite/' 
-    dataset_version = "kb5r3"
+    projPath = './'
+    dataset_version = "kb4"
     model_type = "keras" 
     seed_value = 123
     todate = datetime.datetime.now().strftime("%Y%m%d")
@@ -59,8 +59,8 @@ if __name__ == '__main__':
     dims = xtrain.shape[1]
     
     # parameter grids
-    drop_vals = [0.01, 0.1]         
-    dec_vals = [0.995]                               
+    drop_vals = [0.1, 0.3]
+    dec_vals = [0.99]
     lr_vals = [0.5, 0.25, 0.01]      
     reg_vals = [1e-5,1e-3]                          
     lay_vals = [1]
@@ -94,7 +94,7 @@ if __name__ == '__main__':
                 y00 = np.zeros((x0.shape[0],2))
                 y00[:,0] = y0; y00[:,1] = 1-  y0
                 # fit the model on observations associated with subject whichSubject in this fold
-                model.fit(x0, y00, nb_epoch=2, batch_size=256)
+                model.fit(x0, y00, nb_epoch=8, batch_size=256)
                 mvalid[idx1,i] = model.predict_proba(x1)[:,0]
                 print "finished fold:", j
                 
