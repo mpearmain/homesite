@@ -356,15 +356,12 @@ BuildMP4 <- function() {
   
   # Add in the golden features idea from the forum.
   
-  bigD[, CoverageField1B_PropertyField21B_diff := CoverageField1B - PropertyField21B]
-  bigD[, GeographicField6A_GeographicField8A_diff := GeographicField6A - GeographicField8A]
-  bigD[, GeographicField6A_GeographicField13A_diff := GeographicField6A - GeographicField13A]
-  bigD[, GeographicField8A_GeographicField13A_diff := GeographicField8A - GeographicField13A]
-  bigD[, GeographicField11A_GeographicField13A_diff := GeographicField11A - GeographicField13A]
-  bigD[, GeographicField8A_GeographicField11A_diff:= GeographicField8A - GeographicField11A]
-  
-  
-  
+  bigD[, CoverageField1BPropertyField21Bdiff := CoverageField1B - PropertyField21B]
+  bigD[, GeographicField6AGeographicField8Adiff := GeographicField6A - GeographicField8A]
+  bigD[, GeographicField6AGeographicField13Adiff := GeographicField6A - GeographicField13A]
+  bigD[, GeographicField8AGeographicField13Adiff := GeographicField8A - GeographicField13A]
+  bigD[, GeographicField11AGeographicField13Adiff := GeographicField11A - GeographicField13A]
+  bigD[, GeographicField8AGeographicField11Adiff:= GeographicField8A - GeographicField11A]
   
   # Catch factor columns
   fact_cols <- which(lapply(bigD, class) == "character")
