@@ -176,7 +176,7 @@ write.csv(xvalid, './input/xtrain_ensemble_base.csv', row.names = F)
 xvalid$QuoteConversion_Flag <- NULL
 xvalid$QuoteNumber <- NULL
 
-xfull$QuoteNumber <- id_valid
+xfull$QuoteNumber <- id_full
 write.csv(xfull, './input/xtest_ensemble_base.csv', row.names = F)
 xfull$QuoteConversion_Flag <- NULL
 xfull$QuoteNumber <- NULL
