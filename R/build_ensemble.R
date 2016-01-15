@@ -168,6 +168,21 @@ xfull$xq1 <- xq1; xfull$xq2 <- xq2; xfull$xq3 <- xq3; xfull$xq4 <- xq4
 
 rm(xq1, xq2, xq3, xq4, xMad, xMax, xMed, xMin)
 
+
+# To save dataset for quick optimizations
+xvalid$QuoteConversion_Flag <- y 
+xvalid$QuoteNumber <- id_valid
+write.csv(xvalid, './input/xtrain_ensemble_base.csv', row.names = F)
+xvalid$QuoteConversion_Flag <- NULL
+xvalid$QuoteNumber <- NULL
+
+xfull$QuoteNumber <- id_valid
+write.csv(xfull, './input/xtest_ensemble_base.csv', row.names = F)
+xfull$QuoteConversion_Flag <- NULL
+xfull$QuoteNumber <- NULL
+
+
+
 for (ii in 1:nfolds)
 {
   # mix with glmnet 
@@ -194,12 +209,16 @@ for (ii in 1:nfolds)
   clf <- xgb.train(booster = "gbtree",
                    maximize = TRUE, 
                    print.every.n = 50,
-                   nrounds = 350, eta = 0.007,
-                   max.depth = 15,  colsample_bytree = 0.85,
+                   nrounds = 350, 
+                   eta = 0.007,
+                   max.depth = 15, 
+                   colsample_bytree = 0.85,
                    subsample = 0.8,
-                   data = x0d, objective = "binary:logistic",
-                   watchlist = watch,  eval_metric = "auc",
-                   gamma= 0.05)
+                   data = x0d, 
+                   objective = "binary:logistic",
+                   watchlist = watch,  
+                   eval_metric = "auc",
+                   gamma= 0.005)
   
   prx2 <- predict(clf, x1d)
   storage_matrix[ii,2] <- auc(y1,prx2)
