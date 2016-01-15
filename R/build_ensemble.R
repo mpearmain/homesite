@@ -176,9 +176,8 @@ write.csv(xvalid, './input/xtrain_ensemble_base.csv', row.names = F)
 xvalid$QuoteConversion_Flag <- NULL
 xvalid$QuoteNumber <- NULL
 
-xfull$QuoteNumber <- id_valid
+xfull$QuoteNumber <- id_full
 write.csv(xfull, './input/xtest_ensemble_base.csv', row.names = F)
-xfull$QuoteConversion_Flag <- NULL
 xfull$QuoteNumber <- NULL
 
 
@@ -209,16 +208,16 @@ for (ii in 1:nfolds)
   clf <- xgb.train(booster = "gbtree",
                    maximize = TRUE, 
                    print.every.n = 50,
-                   nrounds = 350, 
-                   eta = 0.007,
-                   max.depth = 15, 
-                   colsample_bytree = 0.85,
-                   subsample = 0.8,
+                   nrounds = 388,
+                   eta = 0.0270118686,
+                   max.depth = 7,
+                   colsample_bytree = 0.871944475,
+                   subsample = 0.8639708,
                    data = x0d, 
                    objective = "binary:logistic",
                    watchlist = watch,  
                    eval_metric = "auc",
-                   gamma= 0.005)
+                   gamma= 0.000634406)
   
   prx2 <- predict(clf, x1d)
   storage_matrix[ii,2] <- auc(y1,prx2)
