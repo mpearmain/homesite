@@ -180,8 +180,6 @@ xfull$QuoteNumber <- id_full
 write.csv(xfull, './input/xtest_ensemble_base.csv', row.names = F)
 xfull$QuoteNumber <- NULL
 
-
-
 for (ii in 1:nfolds)
 {
   # mix with glmnet 
@@ -195,7 +193,6 @@ for (ii in 1:nfolds)
     mod0 <- glmnet(x = as.matrix(x0), y = y0, alpha = (jj-1) * 0.1)
     prx <- predict(mod0,as.matrix(x1))  
     prx <- prx[,ncol(prx)]
-    # storage_matrix[ii,jj] <- auc(y1,prx1)
     prx1 <- prx1 + prx
   }
   storage_matrix[ii,1] <- auc(y1,prx1)
