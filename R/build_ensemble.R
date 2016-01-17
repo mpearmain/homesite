@@ -313,6 +313,20 @@ xfull2[,5] <- prx5
 rm(y0,y1, x0d, x1d, rf0, prx1,prx2,prx3,prx4,prx5)
 rm(par0, net0, mod0,mod_class, clf,x0, x1)
 
+# dump the 2nd level forecasts
+xvalid2 <- data.frame(xvalid2)
+xvalid2$QuoteConversion_Flag <- y 
+xvalid2$QuoteNumber <- id_valid
+write.csv(xvalid2, paste("./input/xvalid2_ensemble_base_",todate,".csv", sep = ""), row.names = F)
+xvalid2$QuoteConversion_Flag <- NULL
+xvalid2$QuoteNumber <- NULL
+
+xfull2 <- data.frame(xfull2)
+xfull2$QuoteNumber <- id_full
+write.csv(xfull2, paste("./input/xfull2_ensemble_base_",todate,".csv", sep = ""), row.names = F)
+xfull2$QuoteNumber <- NULL
+
+
 ## final ensemble forecasts ####
 
 # store xvalid2, xfull2
