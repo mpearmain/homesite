@@ -25,7 +25,7 @@ xtest = xtest.rename(columns=lambda x: x.replace('-', ''))
 sample = pd.read_csv('input/sample_submission.csv')
 
 pred_average = True
-no_bags = 5
+no_bags = 20
 for k in range(no_bags):
     print 'Building bag:', k
     clf = xgb.XGBClassifier(n_estimators=388,
@@ -46,4 +46,4 @@ for k in range(no_bags):
 
 
 sample.QuoteConversion_Flag = pred_average
-sample.to_csv('output/xgb_meta_5bag_15012016.csv', index=False)
+sample.to_csv('output/xgb_meta_20bag_17012016.csv', index=False)

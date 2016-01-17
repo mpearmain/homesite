@@ -59,9 +59,9 @@ if __name__ == '__main__':
     dims = xtrain.shape[1]
     
     # parameter grids
-    drop_vals = [0.1, 0.3]
+    drop_vals = [0.1]
     dec_vals = [0.8]
-    lr_vals = [0.5, 0.25, 0.01]      
+    lr_vals = [0.5, 0.25]
     reg_vals = [1e-5,1e-3]                          
     lay_vals = [1]
     param_grid = tuple([drop_vals, dec_vals, lr_vals, reg_vals, lay_vals])
@@ -94,7 +94,7 @@ if __name__ == '__main__':
                 y00 = np.zeros((x0.shape[0],2))
                 y00[:,0] = y0; y00[:,1] = 1-  y0
                 # fit the model on observations associated with subject whichSubject in this fold
-                model.fit(x0, y00, nb_epoch=50, batch_size=1000)
+                model.fit(x0, y00, nb_epoch=100, batch_size=1000)
                 mvalid[idx1,i] = model.predict_proba(x1)[:,0]
                 print "finished fold:", j
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
             # fit on complete dataset
             ytrain0 = np.zeros((xtrain.shape[0],2))
             ytrain0[:,0] = ytrain; ytrain0[:,1] = 1- ytrain
-            model.fit(np.array(xtrain), ytrain0,nb_epoch=50, batch_size=1000)
+            model.fit(np.array(xtrain), ytrain0,nb_epoch=100, batch_size=1000)
             mfull[:,i] = model.predict_proba(np.array(xtest))[:,0]
             print "finished full prediction"
         
