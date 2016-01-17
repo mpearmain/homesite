@@ -205,7 +205,7 @@ for (ii in 1:nfolds)
   prx2 <- y1 * 0
   for (jj in 1:nbag)
   {
-    set.seed(100*jj + 2^jj)
+    set.seed(1000*jj + 2^jj + 3 * jj^2)
     clf <- xgb.train(booster = "gbtree", maximize = TRUE, 
                      print.every.n = 50, nrounds = 388,
                      eta = 0.0270118686, max.depth = 7,
@@ -223,7 +223,7 @@ for (ii in 1:nfolds)
   prx3 <- y1 * 0
   for (jj in 1:nbag)
   {
-    set.seed(100*jj + 2^jj)
+    set.seed(1000*jj + 2^jj + 3 * jj^2)
     net0 <- nnet(factor(y0) ~ ., data = x0, size = 40, MaxNWts = 20000, decay = 0.02)
     prx3 <- prx3 + predict(net0, x1)
   }
@@ -271,7 +271,7 @@ watch <- list(valid = x1d)
 prx2 <- rep(nrow(xfull),0)
 for (jj in 1:nbag)
 {
-  set.seed(100*jj + 2^jj)
+  set.seed(1000*jj + 2^jj + 3 * jj^2)
   clf <- xgb.train(booster = "gbtree", maximize = TRUE, 
                    print.every.n = 50, nrounds = 388,
                    eta = 0.0270118686, max.depth = 7,
@@ -289,7 +289,7 @@ xfull2[,2] <- prx2
 prx3 <- rep(nrow(xfull),2)
 for (jj in 1:nbag)
 {
-  set.seed(100*jj + 2^jj)
+  set.seed(1000*jj + 2^jj + 3 * jj^2)
   net0 <- nnet(factor(y) ~ ., data = xvalid, size = 40, MaxNWts = 20000, decay = 0.02)
   prx3 <- prx3 + predict(net0, xfull)
 }
@@ -327,9 +327,6 @@ write.csv(xfull2, paste("./input/xfull_lvl2_",todate,"_bag",nbag,".csv", sep = "
 xfull2$QuoteNumber <- NULL
 
 ## final ensemble forecasts ####
-
-# store xvalid2, xfull2
-
 # evaluate performance across folds
 storage2 <- array(0, c(nfolds,5))
 for (ii in 1:nfolds)
