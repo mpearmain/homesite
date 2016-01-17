@@ -9,6 +9,7 @@ require(ranger)
 
 seed_value <- 132
 todate <- str_replace_all(Sys.Date(), "-","")
+nbag <- 5
 
 ## functions ####
 
@@ -128,7 +129,6 @@ for (ii in 2:length(xlist_val))
 rm(xval)
 
 ## build ensemble model ####
-# TODO: calibrate optimal parameters for each of the mixers?
 
 # prepare the data
 y <- xvalid$QuoteConversion_Flag; xvalid$QuoteConversion_Flag <- NULL
@@ -182,7 +182,7 @@ xfull$QuoteNumber <- NULL
 
 for (ii in 1:nfolds)
 {
-  # mix with glmnet 
+  # mix with glmnet: average over multiple alpha parameters 
   isTrain <- which(xfolds$fold_index != ii)
   isValid <- which(xfolds$fold_index == ii)
   x0 <- xvalid[isTrain,];   x1 <- xvalid[isValid,]
@@ -198,31 +198,36 @@ for (ii in 1:nfolds)
   storage_matrix[ii,1] <- auc(y1,prx1)
   xvalid2[isValid,1] <- prx1
   
-  # mix with xgboost
+  # mix with xgboost: bag over multiple seeds
   x0d <- xgb.DMatrix(as.matrix(x0), label = y0)
   x1d <- xgb.DMatrix(as.matrix(x1), label = y1)
   watch <- list(valid = x1d)
-  clf <- xgb.train(booster = "gbtree",
-                   maximize = TRUE, 
-                   print.every.n = 50,
-                   nrounds = 388,
-                   eta = 0.0270118686,
-                   max.depth = 7,
-                   colsample_bytree = 0.871944475,
-                   subsample = 0.8639708,
-                   data = x0d, 
-                   objective = "binary:logistic",
-                   watchlist = watch,  
-                   eval_metric = "auc",
-                   gamma= 0.000634406)
-  
-  prx2 <- predict(clf, x1d)
+  prx2 <- y1 * 0
+  for (jj in 1:nbag)
+  {
+    set.seed(100*jj + 2^jj)
+    clf <- xgb.train(booster = "gbtree", maximize = TRUE, 
+                     print.every.n = 50, nrounds = 388,
+                     eta = 0.0270118686, max.depth = 7,
+                     colsample_bytree = 0.871944475, subsample = 0.8639708,
+                     data = x0d, objective = "binary:logistic",
+                     watchlist = watch, eval_metric = "auc", gamma= 0.000634406)
+    prx <- predict(clf, x1d)
+    prx2 <- prx2 + prx
+  }
+  prx2 <- prx2 / nbag
   storage_matrix[ii,2] <- auc(y1,prx2)
   xvalid2[isValid,2] <- prx2
   
-  # mix with nnet 
-  net0 <- nnet(factor(y0) ~ ., data = x0, size = 40, MaxNWts = 20000, decay = 0.02)
-  prx3 <- predict(net0, x1)
+  # mix with nnet:  
+  prx3 <- y1 * 0
+  for (jj in 1:nbag)
+  {
+    set.seed(100*jj + 2^jj)
+    net0 <- nnet(factor(y0) ~ ., data = x0, size = 40, MaxNWts = 20000, decay = 0.02)
+    prx3 <- prx3 + predict(net0, x1)
+  }
+  prx3 <- prx3 /nbag
   storage_matrix[ii,3] <- auc(y1,prx3)
   xvalid2[isValid,3] <- prx3
 
@@ -236,13 +241,13 @@ for (ii in 1:nfolds)
   rf0 <- ranger(factor(y0) ~ ., data = x0, 
          mtry = 25, num.trees = 350,
          write.forest = T, probability = T,
-         min.node.size = 10, seed = seed_value
-  )
+         min.node.size = 10, seed = seed_value,
+         num.threads = 4)
   prx5 <- predict(rf0, x1)$predictions[,2]
   storage_matrix[ii,5] <- auc(y1,prx5)
   xvalid2[isValid,5] <- prx5
   
-  msg(ii)
+  msg(paste("fold ",ii,": finished", sep = ""))
 }
 
 ## build prediction on full set
@@ -262,23 +267,33 @@ xfull2[,1] <- prx1
 # xgboost
 x0d <- xgb.DMatrix(as.matrix(xvalid), label = y)
 x1d <- xgb.DMatrix(as.matrix(xfull))
-clf <- xgb.train(booster = "gbtree",
-                 maximize = TRUE, 
-                 print.every.n = 50,
-                 nrounds = 350, eta = 0.007,
-                 max.depth = 15,  colsample_bytree = 0.85,
-                 subsample = 0.8, data = x0d, 
-                 objective = "binary:logistic",
-                 # watchlist = watch, 
-                 eval_metric = "auc",gamma= 0.05)
-
-prx2 <- predict(clf, x1d)
-prx2 <- rank(prx2)/length(prx2)
+watch <- list(valid = x1d)
+prx2 <- rep(nrow(xfull),0)
+for (jj in 1:nbag)
+{
+  set.seed(100*jj + 2^jj)
+  clf <- xgb.train(booster = "gbtree", maximize = TRUE, 
+                   print.every.n = 50, nrounds = 388,
+                   eta = 0.0270118686, max.depth = 7,
+                   colsample_bytree = 0.871944475, subsample = 0.8639708,
+                   data = x0d, objective = "binary:logistic",
+                   watchlist = watch, eval_metric = "auc", gamma= 0.000634406)
+  prx <- predict(clf, x1d)
+  prx2 <- prx2 + prx
+}
+prx2 <- prx2 / nbag
 xfull2[,2] <- prx2
 
+
 # mix with nnet 
-net0 <- nnet(factor(y) ~ ., data = xvalid, size = 40, MaxNWts = 20000, decay = 0.02)
-prx3 <- predict(net0, xfull)
+prx3 <- rep(nrow(xfull),2)
+for (jj in 1:nbag)
+{
+  set.seed(100*jj + 2^jj)
+  net0 <- nnet(factor(y) ~ ., data = xvalid, size = 40, MaxNWts = 20000, decay = 0.02)
+  prx3 <- prx3 + predict(net0, xfull)
+}
+prx3 <- prx3 /nbag
 xfull2[,3] <- prx3
 
 # mix with hillclimbing
@@ -290,8 +305,8 @@ xfull2[,4] <- prx4
 rf0 <- ranger(factor(y) ~ ., data = xvalid, 
               mtry = 25, num.trees = 350,
               write.forest = T, probability = T,
-              min.node.size = 10, seed = seed_value
-)
+              min.node.size = 10, seed = seed_value,
+              num.threads = 4)
 prx5 <- predict(rf0, xfull)$predictions[,2]
 xfull2[,5] <- prx5
 
@@ -299,7 +314,8 @@ rm(y0,y1, x0d, x1d, rf0, prx1,prx2,prx3,prx4,prx5)
 rm(par0, net0, mod0,mod_class, clf,x0, x1)
 
 ## final ensemble forecasts ####
-# SFSG # 
+
+# store xvalid2, xfull2
 
 # evaluate performance across folds
 storage2 <- array(0, c(nfolds,5))
