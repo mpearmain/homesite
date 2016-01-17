@@ -317,15 +317,14 @@ rm(par0, net0, mod0,mod_class, clf,x0, x1)
 xvalid2 <- data.frame(xvalid2)
 xvalid2$QuoteConversion_Flag <- y 
 xvalid2$QuoteNumber <- id_valid
-write.csv(xvalid2, paste("./input/xvalid2_ensemble_base_",todate,".csv", sep = ""), row.names = F)
+write.csv(xvalid2, paste("./input/xvalid_lvl2_",todate,"_bag",nbag,".csv", sep = ""), row.names = F)
 xvalid2$QuoteConversion_Flag <- NULL
 xvalid2$QuoteNumber <- NULL
 
 xfull2 <- data.frame(xfull2)
 xfull2$QuoteNumber <- id_full
-write.csv(xfull2, paste("./input/xfull2_ensemble_base_",todate,".csv", sep = ""), row.names = F)
+write.csv(xfull2, paste("./input/xfull_lvl2_",todate,"_bag",nbag,".csv", sep = ""), row.names = F)
 xfull2$QuoteNumber <- NULL
-
 
 ## final ensemble forecasts ####
 
