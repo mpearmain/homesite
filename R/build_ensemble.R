@@ -9,7 +9,7 @@ require(ranger)
 
 seed_value <- 132
 todate <- str_replace_all(Sys.Date(), "-","")
-nbag <- 5
+nbag <- 10
 
 ## functions ####
 
