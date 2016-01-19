@@ -16,8 +16,8 @@ def csv2dicts(csvfile):
     return data
 
 
-train_data = "./input/xtrain_mp1.csv"
-test_data = "./input/xtest_mp1.csv"
+train_data = "./input/xtrain_mp4.csv"
+test_data = "./input/xtest_mp4.csv"
 
 with open(train_data) as csvfile:
     data = csv.reader(csvfile, delimiter=',')
