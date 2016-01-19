@@ -271,18 +271,23 @@ prx2 <- rep(0, nrow(xfull))
 for (jj in 1:nbag)
 {
   set.seed(seed_value + 1000*jj + 2^jj + 3 * jj^2)
-  clf <- xgb.train(booster = "gbtree", maximize = TRUE, 
-                   print.every.n = 50, nrounds = 388,
-                   eta = 0.0270118686, max.depth = 7,
-                   colsample_bytree = 0.871944475, subsample = 0.8639708,
-                   data = x0d, objective = "binary:logistic",
-                   eval_metric = "auc", gamma= 0.000634406)
+  clf <- xgb.train(booster = "gbtree",
+                   maximize = TRUE, 
+                   print.every.n = 50,
+                   nrounds = 388,
+                   eta = 0.0270118686, 
+                   max.depth = 7,
+                   colsample_bytree = 0.871944475, 
+                   subsample = 0.8639708,
+                   data = x0d, 
+                   objective = "binary:logistic",
+                   eval_metric = "auc", 
+                   gamma= 0.000634406)
   prx <- predict(clf, x1d)
   prx2 <- prx2 + prx
 }
 prx2 <- prx2 / nbag
 xfull2[,2] <- prx2
-
 
 # mix with nnet 
 prx3 <- rep(0, nrow(xfull))
