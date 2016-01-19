@@ -1658,16 +1658,19 @@ class NN_with_EntityEmbedding(Model):
 
     def fit(self):
         if self.train_ratio < 1:
-            self.model.fit(self.preprocessing(self.X), self._val_for_fit(self.y),
+            self.model.fit(self.preprocessing(self.X),
+                           self._val_for_fit(self.y),
                            validation_data=(self.preprocessing(self.X_val), self._val_for_fit(self.y_val)),
-                           nb_epoch=self.nb_epoch, batch_size=128,
-                           # callbacks=[self.checkpointer],
+                           nb_epoch=self.nb_epoch,
+                           batch_size=128,
                            )
             # self.model.load_weights('best_model_weights.hdf5')
             print("Result on validation data: ", self.evaluate())
         else:
-            self.model.fit(self.preprocessing(self.X), self._val_for_fit(self.y),
-                           nb_epoch=self.nb_epoch, batch_size=128)
+            self.model.fit(self.preprocessing(self.X),
+                           self._val_for_fit(self.y),
+                           nb_epoch=self.nb_epoch,
+                           batch_size=128)
 
     def guess(self, feature):
         feature = numpy.array(feature).reshape(1, -1)
