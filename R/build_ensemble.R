@@ -267,7 +267,7 @@ xfull2[,1] <- prx1
 # xgboost
 x0d <- xgb.DMatrix(as.matrix(xvalid), label = y)
 x1d <- xgb.DMatrix(as.matrix(xfull))
-prx2 <- rep(nrow(xfull),0)
+prx2 <- rep(0, nrow(xfull))
 for (jj in 1:nbag)
 {
   set.seed(seed_value + 1000*jj + 2^jj + 3 * jj^2)
@@ -285,7 +285,7 @@ xfull2[,2] <- prx2
 
 
 # mix with nnet 
-prx3 <- rep(nrow(xfull),2)
+prx3 <- rep(0, nrow(xfull))
 for (jj in 1:nbag)
 {
   set.seed(seed_value + 1000*jj + 2^jj + 3 * jj^2)
