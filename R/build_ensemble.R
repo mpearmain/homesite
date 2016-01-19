@@ -267,7 +267,6 @@ xfull2[,1] <- prx1
 # xgboost
 x0d <- xgb.DMatrix(as.matrix(xvalid), label = y)
 x1d <- xgb.DMatrix(as.matrix(xfull))
-watch <- list(valid = x1d)
 prx2 <- rep(nrow(xfull),0)
 for (jj in 1:nbag)
 {
@@ -277,7 +276,7 @@ for (jj in 1:nbag)
                    eta = 0.0270118686, max.depth = 7,
                    colsample_bytree = 0.871944475, subsample = 0.8639708,
                    data = x0d, objective = "binary:logistic",
-                   watchlist = watch, eval_metric = "auc", gamma= 0.000634406)
+                   eval_metric = "auc", gamma= 0.000634406)
   prx <- predict(clf, x1d)
   prx2 <- prx2 + prx
 }
