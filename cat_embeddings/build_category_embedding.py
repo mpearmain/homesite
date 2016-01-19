@@ -51,7 +51,9 @@ class NN_with_EntityEmbedding(Model):
         super().__init__(train_ratio)
         self.build_preprocessor(self.X)
         self.nb_epoch = 20
-        self.checkpointer = ModelCheckpoint(filepath="best_model_weights.hdf5", verbose=1, save_best_only=True)
+        self.checkpointer = ModelCheckpoint(filepath="best_model_weights.hdf5",
+                                            verbose=1,
+                                            save_best_only=True)
         self.max_log_y = numpy.max(numpy.log(self.y))
         self.min_log_y = numpy.min(numpy.log(self.y))
         self.__build_keras_model()
@@ -1660,7 +1662,8 @@ class NN_with_EntityEmbedding(Model):
         if self.train_ratio < 1:
             self.model.fit(self.preprocessing(self.X),
                            self._val_for_fit(self.y),
-                           validation_data=(self.preprocessing(self.X_val), self._val_for_fit(self.y_val)),
+                           validation_data=(self.preprocessing(self.X_val),
+                                            self._val_for_fit(self.y_val)),
                            nb_epoch=self.nb_epoch,
                            batch_size=128,
                            )
