@@ -21,6 +21,17 @@ msg <- function(mmm,...)
   cat(sprintf(paste0("[%s] ",mmm),Sys.time(),...)); cat("\n")
 }
 
+auc<-function (actual, predicted) {
+  
+  r <- as.numeric(rank(predicted))
+  
+  n_pos <- as.numeric(sum(actual == 1))
+  n_neg <- as.numeric(length(actual) - n_pos)
+  auc <- (sum(r[actual == 1]) - n_pos * (n_pos + 1)/2)/(n_pos *  n_neg)
+  auc
+  
+}
+
 ## MP set v1 ####
 
 BuildMP1 <- function() {
@@ -921,3 +932,87 @@ dist2$QuoteNumber <- test_QuoteNumber
 
 write_csv(dist1, "./input/xtrain_kb7.csv")
 write_csv(dist2, "./input/xtest_kb7.csv")
+
+## KB set v8: kb4 with pairwise differences  ####
+xtrain <- read_csv("./input/xtrain_kb4.csv")
+xtest <- read_csv("./input/xtest_kb4.csv")
+
+y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
+train_QuoteNumber <- xtrain$QuoteNumber
+test_QuoteNumber <- xtest$QuoteNumber
+xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
+
+## trim linear combos
+flc <- findLinearCombos(xtrain)
+xtrain <- xtrain[,-flc$remove]
+xtest <- xtest[,-flc$remove]
+
+## find correlated pairs
+xcor <- cor(xtrain)
+flc <- findCorrelation(xcor, 0.99)
+corr_pairs <- which(xcor > 0.99, arr.ind = T)
+corr_pairs <- corr_pairs[corr_pairs[,1] > corr_pairs[,2],]
+
+# create new features
+xtr1 <- array(0, c(nrow(xtrain), nrow(corr_pairs)))
+xte1 <- array(0, c(nrow(xtest), nrow(corr_pairs)))
+
+for (ii in 1:nrow(corr_pairs))
+{
+  xtr1[,ii] <- apply(xtrain[,corr_pairs[ii,]],1,diff)
+  xte1[,ii] <- apply(xtest[,corr_pairs[ii,]],1,diff)
+  msg(ii)
+}
+colnames(xtr1) <- colnames(xte1) <- paste("diff", 1:ncol(xtr1), sep = "")
+xtrain <- xtrain[,-flc]; xtest <- xtest[,-flc]
+xtrain <- data.frame(xtrain, xtr1)
+xtest <- data.frame(xtest, xte1)
+
+# store
+xtrain$QuoteConversion_Flag <- y
+xtrain$QuoteNumber <- train_QuoteNumber
+xtest$QuoteNumber <- test_QuoteNumber
+write_csv(xtrain, "./input/xtrain_kb8.csv")
+write_csv(xtest, "./input/xtest_kb8.csv")
+
+## KB set v9: kb5 with pairwise differences  ####
+xtrain <- read_csv("./input/xtrain_kb5.csv")
+xtest <- read_csv("./input/xtest_kb5.csv")
+
+y <- xtrain$QuoteConversion_Flag; xtrain$QuoteConversion_Flag <- NULL
+train_QuoteNumber <- xtrain$QuoteNumber
+test_QuoteNumber <- xtest$QuoteNumber
+xtrain$QuoteNumber <- xtest$QuoteNumber <- NULL
+
+## trim linear combos
+flc <- findLinearCombos(xtrain)
+xtrain <- xtrain[,-flc$remove]
+xtest <- xtest[,-flc$remove]
+
+## find correlated pairs
+xcor <- cor(xtrain)
+flc <- findCorrelation(xcor, 0.99)
+corr_pairs <- which(xcor > 0.99, arr.ind = T)
+corr_pairs <- corr_pairs[corr_pairs[,1] > corr_pairs[,2],]
+
+# create new features
+xtr1 <- array(0, c(nrow(xtrain), nrow(corr_pairs)))
+xte1 <- array(0, c(nrow(xtest), nrow(corr_pairs)))
+
+for (ii in 1:nrow(corr_pairs))
+{
+  xtr1[,ii] <- apply(xtrain[,corr_pairs[ii,]],1,diff)
+  xte1[,ii] <- apply(xtest[,corr_pairs[ii,]],1,diff)
+  msg(ii)
+}
+colnames(xtr1) <- colnames(xte1) <- paste("diff", 1:ncol(xtr1), sep = "")
+xtrain <- xtrain[,-flc]; xtest <- xtest[,-flc]
+xtrain <- data.frame(xtrain, xtr1)
+xtest <- data.frame(xtest, xte1)
+
+# store
+xtrain$QuoteConversion_Flag <- y
+xtrain$QuoteNumber <- train_QuoteNumber
+xtest$QuoteNumber <- test_QuoteNumber
+write_csv(xtrain, "./input/xtrain_kb9.csv")
+write_csv(xtest, "./input/xtest_kb9.csv")
