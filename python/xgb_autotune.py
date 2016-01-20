@@ -70,15 +70,15 @@ if __name__ == "__main__":
     y1 = ytrain[ytrain.index.isin(idx1)]
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (int(4), int(20)),
-                                      'learning_rate': (0.03, 0.01),
-                                      'n_estimators': (int(100), int(500)),
-                                      'subsample': (0.8, 0.9),
-                                      'colsample_bytree': (0.8, 0.9),
-                                      'gamma': (0., 0.001)
+                                     {'max_depth': (int(6), int(12)),
+                                      'learning_rate': (0.03, 0.02),
+                                      'n_estimators': (int(300), int(750)),
+                                      'subsample': (0.85, 0.9),
+                                      'colsample_bytree': (0.85, 0.9),
+                                      'gamma': (0.0001, 0.0007)
                                      })
 
-    xgboostBO.maximize(init_points=7, restarts=100, n_iter=23)
+    xgboostBO.maximize(init_points=7, restarts=250, n_iter=35)
     print('-' * 53)
 
     print('Final Results')
