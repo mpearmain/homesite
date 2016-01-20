@@ -206,12 +206,19 @@ for (ii in 1:nfolds)
   for (jj in 1:nbag)
   {
     set.seed(seed_value + 1000*jj + 2^jj + 3 * jj^2)
-    clf <- xgb.train(booster = "gbtree", maximize = TRUE, 
-                     print.every.n = 50, nrounds = 388,
-                     eta = 0.0270118686, max.depth = 7,
-                     colsample_bytree = 0.871944475, subsample = 0.8639708,
-                     data = x0d, objective = "binary:logistic",
-                     watchlist = watch, eval_metric = "auc", gamma= 0.000634406)
+    clf <- xgb.train(booster = "gbtree", 
+                     maximize = TRUE, 
+                     print.every.n = 50, 
+                     nrounds = 461,
+                     eta = 0.024278775290613688, 
+                     max.depth = 7,
+                     colsample_bytree = 0.871944475, 
+                     subsample = 0.85759332970977742,
+                     data = x0d, 
+                     objective = "binary:logistic",
+                     watchlist = watch, 
+                     eval_metric = "auc", 
+                     gamma= 0.00019403802132243292)
     prx <- predict(clf, x1d)
     prx2 <- prx2 + prx
   }
@@ -271,18 +278,19 @@ prx2 <- rep(0, nrow(xfull))
 for (jj in 1:nbag)
 {
   set.seed(seed_value + 1000*jj + 2^jj + 3 * jj^2)
-  clf <- xgb.train(booster = "gbtree",
+  clf <- xgb.train(booster = "gbtree", 
                    maximize = TRUE, 
-                   print.every.n = 50,
-                   nrounds = 388,
-                   eta = 0.0270118686, 
+                   print.every.n = 50, 
+                   nrounds = 461,
+                   eta = 0.024278775290613688, 
                    max.depth = 7,
                    colsample_bytree = 0.871944475, 
-                   subsample = 0.8639708,
+                   subsample = 0.85759332970977742,
                    data = x0d, 
                    objective = "binary:logistic",
+                   watchlist = watch, 
                    eval_metric = "auc", 
-                   gamma= 0.000634406)
+                   gamma= 0.00019403802132243292)
   prx <- predict(clf, x1d)
   prx2 <- prx2 + prx
 }
