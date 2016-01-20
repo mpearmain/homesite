@@ -332,22 +332,20 @@ xfull2$QuoteNumber <- NULL
 
 ## final ensemble forecasts ####
 # evaluate performance across folds
-storage2 <- array(0, c(nfolds,5))
+storage2 <- array(0, c(nfolds,3))
 for (ii in 1:nfolds)
 {
   isTrain <- which(xfolds$fold_index != ii)
   isValid <- which(xfolds$fold_index == ii)
   x0 <- apply(xvalid2[isTrain,],2,rank)/length(isTrain)
   x1 <- apply(xvalid2[isValid,],2,rank)/length(isValid)
-  x0 <- data.frame(x0)
-  x1 <- data.frame(x1)
+  x0 <- data.frame(x0); x1 <- data.frame(x1)
   y0 <- y[isTrain];  y1 <- y[isValid]
   
   par0 <- buildEnsemble(c(1,15, 5,0.6), x0,y0)
-  storage2[ii,1] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
+  pr1 <- as.matrix(x1) %*% as.matrix(par0)
+  storage2[ii,1] <- auc(y1, pr1)
 
-  par0 <- buildEnsemble(c(1,20, 5,0.6), x0,y0)
-  storage2[ii,2] <- auc(y1, as.matrix(x1) %*% as.matrix(par0))
 }
 
 
