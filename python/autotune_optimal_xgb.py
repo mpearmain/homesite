@@ -5,16 +5,23 @@ __author__ = 'mpearmain'
 import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import roc_auc_score as auc
+import datetime
 
+# settings
+projPath = '/Users/konrad/Documents/projects/homesite/' 
+dataset_version = "kb8"
+todate = datetime.datetime.now().strftime("%Y%m%d")    
+no_bags = 20
+    
 ## data
 # read the training and test sets
-xtrain = pd.read_csv('input/xtrain_ensemble_base.csv')
+xtrain = pd.read_csv(projPath + 'input/xtrain_'+ dataset_version + '.csv')
 id_train = xtrain.QuoteNumber
 ytrain = xtrain.QuoteConversion_Flag
 xtrain.drop('QuoteNumber', axis = 1, inplace = True)
 xtrain.drop('QuoteConversion_Flag', axis = 1, inplace = True)
 
-xtest = pd.read_csv('input/xtest_ensemble_base.csv')
+xtest = pd.read_csv(projPath + 'input/xtest_'+ dataset_version + '.csv')
 id_test = xtest.QuoteNumber
 xtest.drop('QuoteNumber', axis = 1, inplace = True)
 
@@ -25,7 +32,7 @@ xtest = xtest.rename(columns=lambda x: x.replace('-', ''))
 sample = pd.read_csv('input/sample_submission.csv')
 
 pred_average = True
-no_bags = 20
+
 for k in range(no_bags):
     print 'Building bag:', k
     clf = xgb.XGBClassifier(n_estimators=461,
@@ -46,4 +53,4 @@ for k in range(no_bags):
 
 
 sample.QuoteConversion_Flag = pred_average
-sample.to_csv('output/xgb_meta_20bag_17012016.csv', index=False)
+sample.to_csv('submissions/xgb_meta_'+str(no_bags)+'bag_'+todate+'.csv', index=False)
