@@ -358,9 +358,8 @@ for (ii in 1:nfolds)
   par0 <- buildEnsemble(c(1,15, 5,0.6), x0,y0)
   pr1 <- as.matrix(x1) %*% as.matrix(par0)
   storage2[ii,1] <- auc(y1, pr1)
-
+  
 }
-
 
 # find the best combination of mixers
 xvalid2 <- apply(xvalid2,2,rank)/nrow(xvalid2)
