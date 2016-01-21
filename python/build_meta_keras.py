@@ -45,12 +45,12 @@ if __name__ == '__main__':
     ## model
     nb_classes = 2
     dims = xtrain.shape[1]
-    epochs = 50
+    epochs = 20
 
     # parameter grids
-    drop_vals = [0.01, 0.1, 0.25]
-    dec_vals = [0.995, 0.9]
-    lr_vals = [1, 0.5, 0.25, 0.01]
+    drop_vals = [0.01, 0.2]
+    dec_vals = [0.995, 0.8]
+    lr_vals = [1, 0.1, 0.01]
     reg_vals = [1e-5,1e-3]
     lay_vals = [1,2]
     param_grid = tuple([drop_vals, dec_vals, lr_vals, reg_vals, lay_vals])
