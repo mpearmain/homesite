@@ -147,6 +147,11 @@ storage_matrix <- array(0, c(nfolds, 5))
 xvalid2 <- array(0, c(nrow(xvalid),5))
 xfull2 <- array(0, c(nrow(xfull),5))
 
+# trim linearly dependent ones 
+flc <- findLinearCombos(xvalid)
+xvalid <- xvalid[,-flc$remove]
+xfull <- xfull[,-flc$remove]
+
 # amend the data
 xMed <- apply(xvalid,1,median); xMin <- apply(xvalid,1,min)
 xMax <- apply(xvalid,1,max); xMad <- apply(xvalid,1,mad)
