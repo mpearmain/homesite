@@ -29,7 +29,7 @@ xtest.drop('QuoteNumber', axis = 1, inplace = True)
 xtrain = xtrain.rename(columns=lambda x: x.replace('-', ''))
 xtest = xtest.rename(columns=lambda x: x.replace('-', ''))
 
-sample = pd.read_csv('input/sample_submission.csv')
+sample = pd.read_csv(projPath + 'input/sample_submission.csv')
 
 pred_average = True
 
