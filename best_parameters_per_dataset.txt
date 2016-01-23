@@ -1,0 +1,23 @@
+## optimal parameters per dataset 
+
+## ref params
+    clf = xgb.XGBClassifier(n_estimators=461,
+                            nthread=-1,
+                            max_depth=7,
+                            learning_rate=0.024278775290613688,
+                            silent=True,
+                            subsample=0.85759332970977742,
+                            colsample_bytree=0.871944475,
+                            gamma=0.00019403802132243292,
+                            seed=k*100+22)
+
+## kb8
+Current maximum:       0.969040 | 
+ with parameters:  {'colsample_bytree': 0.87405231116619919, 
+                   'learning_rate': 0.029963061070038485, 
+                   'n_estimators': 651.84824479485314, 
+                   'subsample': 0.88025033414807519, 
+                   'max_depth': 9.899930901202854,
+                   'gamma': 0.0004292980552190432}
+
+## kb9
