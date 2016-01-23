@@ -11,7 +11,7 @@ import datetime
 projPath = '/Users/konrad/Documents/projects/homesite/' 
 dataset_version = "kb8"
 todate = datetime.datetime.now().strftime("%Y%m%d")    
-no_bags = 20
+no_bags = 15
     
 ## data
 # read the training and test sets
@@ -35,15 +35,16 @@ pred_average = True
 
 for k in range(no_bags):
     print 'Building bag:', k
-    clf = xgb.XGBClassifier(n_estimators=461,
+    clf = xgb.XGBClassifier(n_estimators=652,
                             nthread=-1,
-                            max_depth=7,
-                            learning_rate=0.024278775290613688,
+                            max_depth=10,
+                            learning_rate= 0.029963061070038485,
                             silent=True,
-                            subsample=0.85759332970977742,
-                            colsample_bytree=0.871944475,
-                            gamma=0.00019403802132243292,
+                            subsample=0.88025033414807519,
+                            colsample_bytree=0.87405231116619919,
+                            gamma=0.0004292980552190432,
                             seed=k*100+22)
+                                               
     clf.fit(xtrain, ytrain, eval_metric="auc")
     preds = clf.predict_proba(xtest)[:,1]
     if type(pred_average) == bool:
