@@ -2,6 +2,12 @@
 
 ## Data analysis
 
+### Datasets
+The original datasets (training and test) are processed to create several versions of train/test
+
+### Folds
+
+The file *folds_prep.R* generates a split of the training set into 5 folds, 10 folds and a train/validation split. The output is a dataframe xfolds (and a file *xfolds.csv*), which is used in subsequent analysis. This way we can ensure consistency across different models - each time the same folds are used, so there is no leakage.
 
 ## Metafeatures 
 
