@@ -1,4 +1,12 @@
-# homesite
+# Homesite contest
+
+## Data analysis
+
+
+## Metafeatures 
+
+
+## Ensembling
 
 As per previous comps.
 
