@@ -1,9 +1,18 @@
 # Homesite contest
 
+This is the description of the approach taken by team New Model Army (Michael Pearmain and Konrad Banachewicz) in the Homesite Quote Conversion contest hosted by Kaggle:
+
+https://www.kaggle.com/c/homesite-quote-conversion
+
 ## Data analysis
 
 ### Datasets
-The original datasets (training and test) are processed to create several versions of train/test
+The original datasets (training and test) are processed to create several versions of train/test:
+* kb1:
+* kb2: 
+* kb3: 
+
+Those datasets are used as input to the metafeature creation (see below).
 
 ### Folds
 
