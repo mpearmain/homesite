@@ -11,7 +11,7 @@ import datetime
 projPath = '/Users/konrad/Documents/projects/homesite/' 
 dataset_version = "kb8"
 todate = datetime.datetime.now().strftime("%Y%m%d")    
-no_bags = 15
+no_bags = 20
     
 ## data
 # read the training and test sets
