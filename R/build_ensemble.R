@@ -9,7 +9,7 @@ require(ranger)
 
 seed_value <- 132
 todate <- str_replace_all(Sys.Date(), "-","")
-nbag <- 10
+nbag <- 5
 
 ## functions ####
 
@@ -86,8 +86,8 @@ buildEnsemble <- function(parVec, xset, yvec)
 
 ## data ####
 # list the groups 
-xlist_val <- dir("./metafeatures/", pattern = "prval", full.names = T)
-xlist_full <- dir("./metafeatures/", pattern = "prfull", full.names = T)
+xlist_val <- dir("./metafeatures/", pattern =  "prval_xgb|prval_keras", full.names = T)
+xlist_full <- dir("./metafeatures/", pattern = "prfull_xgb|prfull_keras", full.names = T)
 
 # aggregate validation set
 ii <- 1
@@ -149,8 +149,11 @@ xfull2 <- array(0, c(nrow(xfull),5))
 
 # trim linearly dependent ones 
 flc <- findLinearCombos(xvalid)
-xvalid <- xvalid[,-flc$remove]
-xfull <- xfull[,-flc$remove]
+if (length(flc$remove))
+{
+  xvalid <- xvalid[,-flc$remove]
+  xfull <- xfull[,-flc$remove]
+}
 
 # amend the data
 xMed <- apply(xvalid,1,median); xMin <- apply(xvalid,1,min)
