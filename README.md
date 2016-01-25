@@ -4,6 +4,11 @@ This is the description of the approach taken by team New Model Army (Michael Pe
 
 https://www.kaggle.com/c/homesite-quote-conversion
 
+The general idea is a two-level architecture:
+1. create multiple transformations of the train/test data
+2. generate stacked predictions using multiple models trained on versions of the data (metafeatures)
+3. create a stacked ensemble of the metafeatures
+
 ## Data analysis
 
 ### Datasets
