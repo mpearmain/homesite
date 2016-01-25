@@ -21,9 +21,11 @@ Current maximum:       0.969040 |
                    'gamma': 0.0004292980552190432}
 
 ## kb9
-                     {'colsample_bytree': 0.85958285662278566, 
-                    'learning_rate': 0.010364420536711931,
-                     'n_estimators': 642.57156618861507,
-                     'subsample': 0.84059725394330354,
-                         'max_depth': 7.6273752490393161, 
-                        'gamma': 0.00058459083801296334}	
+                   
+               | Current maximum:       0.970842 | 
+with parameters:  {'colsample_bytree': 0.82382811146133705, 
+                'learning_rate': 0.024060187636436775,
+                 'n_estimators': 743.02616296255815, 
+                    'subsample': 0.83511824232715615, 
+                'max_depth': 8.067708907920391, 
+                'gamma': 0.00017716756748852318}
