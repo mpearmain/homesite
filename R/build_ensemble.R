@@ -148,8 +148,10 @@ xvalid2 <- array(0, c(nrow(xvalid),5))
 xfull2 <- array(0, c(nrow(xfull),5))
 
 # trim linearly dependent ones 
+print(paste("Pre linear combo trim size ", dim(xvalid)[2]))
 flc <- findLinearCombos(xvalid)
 xvalid <- xvalid[,-flc$remove]
+print(paste("Post linear combo trim size ", dim(xvalid)[2]))
 xfull <- xfull[,-flc$remove]
 
 # amend the data

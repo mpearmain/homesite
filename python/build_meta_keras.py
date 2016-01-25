@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     ## settings
     projPath = './'
-    dataset_version = "kb4"
+    dataset_version = "kb9"
     model_type = "keras"
     seed_value = 123
     todate = datetime.datetime.now().strftime("%Y%m%d")
