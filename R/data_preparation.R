@@ -1,6 +1,4 @@
-# Data Creation Script
-# These output can then be used in all subsequent models, and the prediction can ben ensembled from
-# the validation using ridge regression (say).
+# These output can then be used in all subsequent models
 
 ## packages loading ####
 library(data.table)
