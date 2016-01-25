@@ -37,8 +37,8 @@ def xgboostcv(max_depth,
 
 if __name__ == "__main__":
     ## settings
-    projPath = './'
-    dataset_version = "ensemble_base"
+    projPath = '/Users/konrad/Documents/projects/homesite/'
+    dataset_version = "kb9"
     model_type = "xgb"
     seed_value = 260
     todate = datetime.datetime.now().strftime("%Y%m%d")
@@ -71,10 +71,10 @@ if __name__ == "__main__":
 
     xgboostBO = BayesianOptimization(xgboostcv,
                                      {'max_depth': (int(6), int(12)),
-                                      'learning_rate': (0.03, 0.02),
-                                      'n_estimators': (int(300), int(750)),
-                                      'subsample': (0.85, 0.9),
-                                      'colsample_bytree': (0.85, 0.9),
+                                      'learning_rate': (0.03, 0.01),
+                                      'n_estimators': (int(300), int(1000)),
+                                      'subsample': (0.8, 0.9),
+                                      'colsample_bytree': (0.8, 0.9),
                                       'gamma': (0.0001, 0.0007)
                                      })
 
