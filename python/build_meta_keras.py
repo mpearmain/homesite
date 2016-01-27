@@ -71,7 +71,6 @@ if __name__ == '__main__':
                 x = param_grid[i]
                 model = Sequential()
                 model.add(Dense(dims * x[4], input_shape=(dims,),W_regularizer=l2(x[3])))
-                #model.add(PReLU())
                 model.add(BatchNormalization())
                 model.add(Dropout(x[0]))
                 model.add(Dense(nb_classes))
@@ -86,7 +85,7 @@ if __name__ == '__main__':
                 y0 = np.array(ytrain)[idx0]
                 y1 = np.array(ytrain)[idx1]
                 y00 = np.zeros((x0.shape[0],2))
-                y00[:,0] = y0; y00[:,1] = 1-  y0
+                y00[:,0] = y0; y00[:,1] = 1-y0
                 # fit the model on observations associated with subject whichSubject in this fold
                 model.fit(x0, y00, nb_epoch=epochs, batch_size=1000)
                 mvalid[idx1,i] = model.predict_proba(x1)[:,0]
