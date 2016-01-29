@@ -219,16 +219,17 @@ for (ii in 1:nfolds)
     clf <- xgb.train(booster = "gbtree", 
                      maximize = TRUE, 
                      print.every.n = 50, 
-                     nrounds = 461,
-                     eta = 0.024278775290613688, 
-                     max.depth = 7,
-                     colsample_bytree = 0.871944475, 
-                     subsample = 0.85759332970977742,
+                     nrounds = 621,
+                     eta = 0.021700388765921064, 
+                     max.depth = 9,
+                     colsample_bytree = 0.83914630981480487, 
+                     subsample = 0.87375172168899873,
+                     min_child_weight = 19.343366117536888,
                      data = x0d, 
                      objective = "binary:logistic",
                      watchlist = watch, 
                      eval_metric = "auc", 
-                     gamma= 0.00019403802132243292)
+                     gamma= 0.00012527443501287444)
     prx <- predict(clf, x1d)
     prx2 <- prx2 + prx
   }
@@ -291,16 +292,17 @@ for (jj in 1:nbag)
   clf <- xgb.train(booster = "gbtree", 
                    maximize = TRUE, 
                    print.every.n = 50, 
-                   nrounds = 461,
-                   eta = 0.024278775290613688, 
-                   max.depth = 7,
-                   colsample_bytree = 0.871944475, 
-                   subsample = 0.85759332970977742,
+                   nrounds = 621,
+                   eta = 0.021700388765921064, 
+                   max.depth = 9,
+                   colsample_bytree = 0.83914630981480487, 
+                   subsample = 0.87375172168899873,
+                   min_child_weight = 19.343366117536888,
                    data = x0d, 
                    objective = "binary:logistic",
-                   watchlist = watch, 
+                   # watchlist = watch, 
                    eval_metric = "auc", 
-                   gamma= 0.00019403802132243292)
+                   gamma= 0.00012527443501287444)
   prx <- predict(clf, x1d)
   prx2 <- prx2 + prx
 }
