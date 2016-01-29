@@ -86,8 +86,8 @@ buildEnsemble <- function(parVec, xset, yvec)
 
 ## data ####
 # list the groups 
-xlist_val <- dir("./metafeatures/", pattern =  "prval_xgb|prval_keras", full.names = T)
-xlist_full <- dir("./metafeatures/", pattern = "prfull_xgb|prfull_keras", full.names = T)
+xlist_val <- dir("./metafeatures/", pattern =  "prval", full.names = T)
+xlist_full <- dir("./metafeatures/", pattern = "prfull", full.names = T)
 
 # aggregate validation set
 ii <- 1
@@ -148,12 +148,14 @@ xvalid2 <- array(0, c(nrow(xvalid),5))
 xfull2 <- array(0, c(nrow(xfull),5))
 
 # trim linearly dependent ones 
+print(paste("Pre linear combo trim size ", dim(xvalid)[2]))
 flc <- findLinearCombos(xvalid)
 if (length(flc$remove))
 {
   xvalid <- xvalid[,-flc$remove]
   xfull <- xfull[,-flc$remove]
 }
+print(paste("Post linear combo trim size ", dim(xvalid)[2]))
 
 # amend the data
 xMed <- apply(xvalid,1,median); xMin <- apply(xvalid,1,min)
@@ -180,12 +182,12 @@ rm(xq1, xq2, xq3, xq4, xMad, xMax, xMed, xMin)
 # To save dataset for quick optimizations
 xvalid$QuoteConversion_Flag <- y 
 xvalid$QuoteNumber <- id_valid
-write.csv(xvalid, './input/xtrain_ensemble_base.csv', row.names = F)
+write.csv(xvalid, paste('./input/xvalid_', todate, '.csv', sep = ""), row.names = F)
 xvalid$QuoteConversion_Flag <- NULL
 xvalid$QuoteNumber <- NULL
 
 xfull$QuoteNumber <- id_full
-write.csv(xfull, './input/xtest_ensemble_base.csv', row.names = F)
+write.csv(xfull, paste('./input/xfull_', todate, '.csv', sep = ""), row.names = F)
 xfull$QuoteNumber <- NULL
 
 for (ii in 1:nfolds)
