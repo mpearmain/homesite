@@ -47,15 +47,15 @@ if __name__ == "__main__":
 
     ## data
     # read the training and test sets
-    # xtrain = pd.read_csv(projPath + 'input/xvalid_20160127.csv')
-    xtrain = pd.read_csv(projPath + 'input/xtrain_' + dataset_version + '.csv')
+    xtrain = pd.read_csv(projPath + 'input/xvalid_20160127.csv')
+    # xtrain = pd.read_csv(projPath + 'input/xtrain_' + dataset_version + '.csv')
     id_train = xtrain.QuoteNumber
     ytrain = xtrain.QuoteConversion_Flag
     xtrain.drop('QuoteNumber', axis = 1, inplace = True)
     xtrain.drop('QuoteConversion_Flag', axis = 1, inplace = True)
 
-    # xtest = pd.read_csv(projPath + 'input/xfull_20160127.csv')
-    xtest = pd.read_csv(projPath + 'input/xtest_' + dataset_version + '.csv')
+    xtest = pd.read_csv(projPath + 'input/xfull_20160127.csv')
+    # xtest = pd.read_csv(projPath + 'input/xtest_' + dataset_version + '.csv')
     id_test = xtest.QuoteNumber
     xtest.drop('QuoteNumber', axis = 1, inplace = True)
 
