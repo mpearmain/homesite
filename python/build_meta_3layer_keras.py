@@ -102,10 +102,9 @@ print dims, 'dims'
 auc_scores=[]
 best_score=-1
 
-param_grid = [[240, 0.1, 0.5, 333, 0.5, 96, 0.5, 250],
-              [1024, 0.1, 0.5, 1024, 0.5, 42, 0.5, 400],
-              [1324, 0.15, 0.6, 512, 0.6, 520, 0.3, 500],
-              [666, 0.05, 0.4, 1512, 0.4, 874, 0.6, 200]]
+param_grid = [[1024, 0.1, 0.6, 1024, 0.6, 420, 0.6, 400],
+              [1324, 0.15, 0.6, 712, 0.8, 520, 0.7, 400],
+              [96, 0.05, 0.4, 1512, 0.4, 330, 0.6, 400]]
 
 # storage structure for forecasts
 mvalid = np.zeros((train.shape[0],len(param_grid)))
@@ -147,9 +146,9 @@ for i in range(len(param_grid)):
 
             # fit the model on observations associated with subject whichSubject in this fold
             model.fit(x0, y0, nb_epoch=x[7], batch_size=1256)
-            mvalid[idx1,i] = model.predict_proba(x1)[:,0]
-            y_pre = model.predict_proba(x1)[:,0]
-            scores = roc_auc_score(y1[:,0],y_pre)
+            mvalid[idx1,i] = model.predict_proba(x1)[:,1]
+            y_pre = model.predict_proba(x1)[:,1]
+            scores = roc_auc_score(y1[:,1],y_pre)
             print 'AUC score', scores
             del model
             print "finished fold:", j
@@ -177,7 +176,7 @@ for i in range(len(param_grid)):
         # fit on complete dataset
 
         model.fit(np.array(train), y_train, nb_epoch=x[7], batch_size=1256)
-        mfull[:,i] = model.predict_proba(np.array(test))[:,0]
+        mfull[:,i] = model.predict_proba(np.array(test))[:,1]
 
         del model
         print "finished full prediction"

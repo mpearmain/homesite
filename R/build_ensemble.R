@@ -147,6 +147,7 @@ storage_matrix <- array(0, c(nfolds, 5))
 xvalid2 <- array(0, c(nrow(xvalid),5))
 xfull2 <- array(0, c(nrow(xfull),5))
 
+print(paste(" Number of cols before linear combo extraction:", dim(xvalid2)[2]))
 # trim linearly dependent ones 
 flc <- findLinearCombos(xvalid)
 if (length(flc$remove))
@@ -154,6 +155,7 @@ if (length(flc$remove))
   xvalid <- xvalid[,-flc$remove]
   xfull <- xfull[,-flc$remove]
 }
+print(paste(" Number of cols after linear combo extraction:", dim(xvalid2)[2]))
 
 # amend the data
 xMed <- apply(xvalid,1,median); xMin <- apply(xvalid,1,min)
