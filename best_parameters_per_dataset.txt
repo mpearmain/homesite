@@ -12,20 +12,35 @@
                             seed=k*100+22)
 
 ## kb8
-Current maximum:       0.969040 | 
- with parameters:  {'colsample_bytree': 0.87405231116619919, 
-                   'learning_rate': 0.029963061070038485, 
-                   'n_estimators': 651.84824479485314, 
-                   'subsample': 0.88025033414807519, 
-                   'max_depth': 9.899930901202854,
-                   'gamma': 0.0004292980552190432}
+Optimization finished with maximum: 0.968721, at position: 
+        {'colsample_bytree': 0.82899654148929447, 
+         'learning_rate': 0.028988389016203479, 
+          'min_child_weight': 8.7579422553344095, 
+          'n_estimators': 591.71212168074635, 
+           'subsample': 0.81765604811001402, 
+            'max_depth': 7.2424114278493592, 
+            'gamma': 0.00024759702580645583}.
 
-## kb9
-                   
-               | Current maximum:       0.970842 | 
-with parameters:  {'colsample_bytree': 0.82382811146133705, 
-                'learning_rate': 0.024060187636436775,
-                 'n_estimators': 743.02616296255815, 
-                    'subsample': 0.83511824232715615, 
-                'max_depth': 8.067708907920391, 
-                'gamma': 0.00017716756748852318}
+
+
+## kb9                   
+Optimization finished with maximum: 0.970580, at position: 
+            {'colsample_bytree': 0.87172374346778558, 
+            'learning_rate': 0.028318899962130707, 
+            'min_child_weight': 13.938277221678346, 
+            'n_estimators': 486.60040430287074, 
+            'subsample': 0.8057801098634314, 
+                'max_depth': 9.5707649363529175, 
+            'gamma': 0.00022775240795391117}.
+
+
+
+## {xfull, xvalid}_20160127.csv'
+Optimization finished with maximum: 0.970061, at position: 
+            {'colsample_bytree': 0.83914630981480487, 
+            'learning_rate': 0.021700388765921064, 
+            'min_child_weight': 19.343366117536888, 
+                'n_estimators': 620.50138315376444, 
+                'subsample': 0.87375172168899873, 
+                'max_depth': 8.8201286995597563, 
+                'gamma': 0.00012527443501287444}.

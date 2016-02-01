@@ -86,8 +86,8 @@ buildEnsemble <- function(parVec, xset, yvec)
 
 ## data ####
 # list the groups 
-xlist_val <- dir("./metafeatures/", pattern =  "prval_xgb|prval_keras", full.names = T)
-xlist_full <- dir("./metafeatures/", pattern = "prfull_xgb|prfull_keras", full.names = T)
+xlist_val <- dir("./metafeatures/", pattern =  "prval", full.names = T)
+xlist_full <- dir("./metafeatures/", pattern = "prfull", full.names = T)
 
 # aggregate validation set
 ii <- 1
@@ -149,6 +149,7 @@ xfull2 <- array(0, c(nrow(xfull),5))
 
 print(paste(" Number of cols before linear combo extraction:", dim(xvalid)[2]))
 # trim linearly dependent ones 
+print(paste("Pre linear combo trim size ", dim(xvalid)[2]))
 flc <- findLinearCombos(xvalid)
 if (length(flc$remove))
 {
@@ -182,12 +183,12 @@ rm(xq1, xq2, xq3, xq4, xMad, xMax, xMed, xMin)
 # To save dataset for quick optimizations
 xvalid$QuoteConversion_Flag <- y 
 xvalid$QuoteNumber <- id_valid
-write.csv(xvalid, './input/xtrain_ensemble_base.csv', row.names = F)
+write.csv(xvalid, paste('./input/xvalid_', todate, '.csv', sep = ""), row.names = F)
 xvalid$QuoteConversion_Flag <- NULL
 xvalid$QuoteNumber <- NULL
 
 xfull$QuoteNumber <- id_full
-write.csv(xfull, './input/xtest_ensemble_base.csv', row.names = F)
+write.csv(xfull, paste('./input/xfull_', todate, '.csv', sep = ""), row.names = F)
 xfull$QuoteNumber <- NULL
 
 for (ii in 1:nfolds)
@@ -219,16 +220,17 @@ for (ii in 1:nfolds)
     clf <- xgb.train(booster = "gbtree", 
                      maximize = TRUE, 
                      print.every.n = 50, 
-                     nrounds = 461,
-                     eta = 0.024278775290613688, 
-                     max.depth = 7,
-                     colsample_bytree = 0.871944475, 
-                     subsample = 0.85759332970977742,
+                     nrounds = 621,
+                     eta = 0.021700388765921064, 
+                     max.depth = 9,
+                     colsample_bytree = 0.83914630981480487, 
+                     subsample = 0.87375172168899873,
+                     min_child_weight = 19.343366117536888,
                      data = x0d, 
                      objective = "binary:logistic",
                      watchlist = watch, 
                      eval_metric = "auc", 
-                     gamma= 0.00019403802132243292)
+                     gamma= 0.00012527443501287444)
     prx <- predict(clf, x1d)
     prx2 <- prx2 + prx
   }
@@ -291,16 +293,17 @@ for (jj in 1:nbag)
   clf <- xgb.train(booster = "gbtree", 
                    maximize = TRUE, 
                    print.every.n = 50, 
-                   nrounds = 461,
-                   eta = 0.024278775290613688, 
-                   max.depth = 7,
-                   colsample_bytree = 0.871944475, 
-                   subsample = 0.85759332970977742,
+                   nrounds = 621,
+                   eta = 0.021700388765921064, 
+                   max.depth = 9,
+                   colsample_bytree = 0.83914630981480487, 
+                   subsample = 0.87375172168899873,
+                   min_child_weight = 19.343366117536888,
                    data = x0d, 
                    objective = "binary:logistic",
-                   watchlist = watch, 
+                   # watchlist = watch, 
                    eval_metric = "auc", 
-                   gamma= 0.00019403802132243292)
+                   gamma= 0.00012527443501287444)
   prx <- predict(clf, x1d)
   prx2 <- prx2 + prx
 }
@@ -380,4 +383,5 @@ prx <- as.matrix(xfull2) %*% as.matrix(par0)
 xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = prx)
 
 # store
+todate <- str_replace_all(Sys.Date(), "-","")
 write_csv(xfor, path = paste("./submissions/ens_bag",nbag,"_",todate,"_seed",seed_value,".csv", sep = ""))
