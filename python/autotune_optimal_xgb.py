@@ -8,10 +8,10 @@ from sklearn.metrics import roc_auc_score as auc
 import datetime
 
 # settings
-projPath = '/Users/konrad/Documents/projects/homesite/' 
-dataset_version = "kb9"
+projPath = './'
+dataset_version = "ensemble_base"
 todate = datetime.datetime.now().strftime("%Y%m%d")    
-no_bags = 10
+no_bags = 2
     
 ## data
 # read the training and test sets
