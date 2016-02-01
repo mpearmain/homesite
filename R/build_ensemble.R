@@ -156,11 +156,7 @@ if (length(flc$remove))
   xvalid <- xvalid[,-flc$remove]
   xfull <- xfull[,-flc$remove]
 }
-<<<<<<< HEAD
-print(paste("Post linear combo trim size ", dim(xvalid)[2]))
-=======
 print(paste(" Number of cols after linear combo extraction:", dim(xvalid)[2]))
->>>>>>> 638c4a67a578b0d6e49508465c1fb108a360eb91
 
 # amend the data
 xMed <- apply(xvalid,1,median); xMin <- apply(xvalid,1,min)
