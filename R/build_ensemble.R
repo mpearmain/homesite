@@ -392,6 +392,9 @@ par0 <- buildEnsemble(c(1,15, 5,0.6), xvalid2,y)
 prx <- as.matrix(xfull2) %*% as.matrix(par0)
 xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = prx)
 
+print(paste("mean: ", mean(storage2[,1])))
+print(paste("sd: ", sd(storage2[,1])))
+
 # store
 todate <- str_replace_all(Sys.Date(), "-","")
 write_csv(xfor, path = paste("./submissions/ens_bag",nbag,"_",todate,"_seed",seed_value,".csv", sep = ""))
