@@ -382,4 +382,5 @@ prx <- as.matrix(xfull2) %*% as.matrix(par0)
 xfor <- data.frame(QuoteNumber = id_full, QuoteConversion_Flag = prx)
 
 # store
+todate <- str_replace_all(Sys.Date(), "-","")
 write_csv(xfor, path = paste("./submissions/ens_bag",nbag,"_",todate,"_seed",seed_value,".csv", sep = ""))
