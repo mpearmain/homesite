@@ -7,9 +7,9 @@ require(xgboost)
 require(nnet)
 require(ranger)
 
-seed_value <- 132
+seed_value <- 450
 todate <- str_replace_all(Sys.Date(), "-","")
-nbag <- 10
+nbag <- 5
 
 ## functions ####
 
