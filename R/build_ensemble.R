@@ -135,16 +135,6 @@ y <- xvalid$QuoteConversion_Flag; xvalid$QuoteConversion_Flag <- NULL
 id_valid <- xvalid$QuoteNumber; xvalid$QuoteNumber <- NULL
 id_full <- xfull$QuoteNumber; xfull$QuoteNumber <- NULL
 
-# sanity check on keras
-where_keras <- grep("keras", colnames(xvalid))
-if (max(apply(xvalid[,where_keras],2,function(s) auc(y,s))) < 0.5)
-{
-  x <- 1 - xvalid[,where_keras]
-  xvalid[,where_keras] <- x
-  x <- 1 - xfull[,where_keras]
-  xfull[,where_keras] <- x
-  
-}
 
 # folds for cv evaluation
 xfolds <- read_csv("./input/xfolds.csv"); xfolds$fold_index <- xfolds$fold5
