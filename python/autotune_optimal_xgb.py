@@ -27,7 +27,7 @@ xtest = pd.read_csv(projPath + 'input/xfull_20160202.csv')
 id_test = xtest.QuoteNumber
 xtest.drop('QuoteNumber', axis = 1, inplace = True)
 
-# Get rid of incorrect names for xgboost (scv-rbf) cannont handle '-'
+# Get rid of incorrect names for xgboost (scv-rbf) cannot handle '-'
 xtrain = xtrain.rename(columns=lambda x: x.replace('-', ''))
 xtest = xtest.rename(columns=lambda x: x.replace('-', ''))
 
