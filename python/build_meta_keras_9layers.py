@@ -240,8 +240,8 @@ for i in range(len(param_grid)):
         model.add(Activation('softmax'))
         opt=Adadelta(lr=1,decay=0.995,epsilon=1e-5)
         model.compile(loss='binary_crossentropy', optimizer="sgd")
-        # fit on complete dataset
 
+        # fit on complete dataset
         model.fit(np.array(train), y_train, nb_epoch=800, batch_size=2256)
         mfull[:,i] = model.predict_proba(np.array(test))[:,1]
 
