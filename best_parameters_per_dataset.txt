@@ -44,3 +44,13 @@ Optimization finished with maximum: 0.970061, at position:
                 'subsample': 0.87375172168899873, 
                 'max_depth': 8.8201286995597563, 
                 'gamma': 0.00012527443501287444}.
+
+## {xfull, xvalid}_20160202.csv'
+Optimization finished with maximum: 0.970063, at position: 
+            {'colsample_bytree': 0.80496791490053055, 
+            'learning_rate': 0.017668218154585136, 
+            'min_child_weight': 8.4966878568341748, 
+            'n_estimators': 696.51311528221845, 
+            'subsample': 0.85005533637305219, 
+            'max_depth': 7.6611323882118008,
+             'gamma': 0.00040708117094670357}.
