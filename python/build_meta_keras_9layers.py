@@ -259,7 +259,6 @@ mfull = pd.DataFrame(mfull)
 mfull.columns = [model_type + str(i) for i in range(0, mfull.shape[1])]
 mfull['QuoteNumber'] = id_test
 
-
 # save the files
 mvalid.to_csv(projPath + 'metafeatures/prval_' + model_type + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '.csv', index = False, header = True)
 mfull.to_csv(projPath + 'metafeatures/prfull_' + model_type + todate + '_data' + dataset_version + '_seed' + str(seed_value) + '.csv', index = False, header = True)
