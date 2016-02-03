@@ -11,7 +11,7 @@ import datetime
 projPath = './'
 dataset_version = "ensemble_base"
 todate = datetime.datetime.now().strftime("%Y%m%d")    
-no_bags = 2
+no_bags = 1
     
 ## data
 # read the training and test sets
@@ -55,4 +55,4 @@ for k in range(no_bags):
 
 
 sample.QuoteConversion_Flag = pred_average
-sample.to_csv(projPath + 'submissions/xgb_meta_data'+dataset_version+'_'+str(no_bags)+'bag_'+todate+'.csv', index=False)
+sample.to_csv(projPath + 'submission/xgb_meta_data'+dataset_version+'_'+str(no_bags)+'bag_'+todate+'.csv', index=False)
