@@ -118,6 +118,7 @@ for i in range(len(param_grid)):
         for j in range(0,n_folds):
             # configure model with j-th combo of parameters
             x = param_grid[i]
+
             model = Sequential()
 
             model.add(Dense(512, input_shape=(dims,)))
@@ -125,7 +126,7 @@ for i in range(len(param_grid)):
             model.add(BatchNormalization())
             model.add(Dropout(0.5))
 
-            model.add(Dense(456))
+            model.add(Dense(256))
             model.add(PReLU())
             model.add(BatchNormalization())
             model.add(Dropout(0.5))
@@ -167,7 +168,6 @@ for i in range(len(param_grid)):
 
             model.add(Dense(nb_classes))
             model.add(Activation('softmax'))
-            opt=Adadelta(lr=1,decay=0.995,epsilon=1e-5)
             model.compile(loss='binary_crossentropy', optimizer="sgd")
 
             idx0 = np.where(fold_index != j)
@@ -178,7 +178,7 @@ for i in range(len(param_grid)):
             y1 = np.array(y_train)[idx1]
 
             # fit the model on observations associated with subject whichSubject in this fold
-            model.fit(x0, y0, nb_epoch=800, batch_size=2256)
+            model.fit(x0, y0, nb_epoch=800, batch_size=4000)
             mvalid[idx1,i] = model.predict_proba(x1)[:,1]
             y_pre = model.predict_proba(x1)[:,1]
             scores = roc_auc_score(y1[:,1],y_pre)
@@ -196,7 +196,7 @@ for i in range(len(param_grid)):
         model.add(BatchNormalization())
         model.add(Dropout(0.5))
 
-        model.add(Dense(456))
+        model.add(Dense(256))
         model.add(PReLU())
         model.add(BatchNormalization())
         model.add(Dropout(0.5))
@@ -238,11 +238,10 @@ for i in range(len(param_grid)):
 
         model.add(Dense(nb_classes))
         model.add(Activation('softmax'))
-        opt=Adadelta(lr=1,decay=0.995,epsilon=1e-5)
         model.compile(loss='binary_crossentropy', optimizer="sgd")
 
         # fit on complete dataset
-        model.fit(np.array(train), y_train, nb_epoch=800, batch_size=2256)
+        model.fit(np.array(train), y_train, nb_epoch=800, batch_size=4000)
         mfull[:,i] = model.predict_proba(np.array(test))[:,1]
 
         del model
