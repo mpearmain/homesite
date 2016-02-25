@@ -47,7 +47,7 @@ To replicate the top NMA (New Model Army) submission all should be run at teh to
 Dataset creation was achieved in R by running the `~/R/data_preparation.R` script
 Those datasets are used as input to the metafeature creation.
 
-WARNING:- The creation of the datasets may take in excess of 2 days.
+*WARNING*:- The creation of the datasets may take in excess of 2 days.
 
 ### Folds
 
@@ -57,13 +57,11 @@ The file `~/R/folds_prep.R` generates a split of the training set into 5 folds, 
 
 This is the main workhorse of the solution where we create fold second level models using a variety of different classification models using `R` and `python`.  Within the `~/R/` and `~/python` directories are numerous `build_meta_XXX` files.  Each of these files must be run and the output is saved into the `~/metafeatures` subdirectory
 
+*WARNING*:- The creation of the metafeatures is an extremely long process, running on a single threaded machine was never undertaken and may result in excess of 20days to run (pure guestimate)
+
 ### Second level Meta Ensembling.
 Once we have a variety of models prediction as meta features, we then build a second stage set of meta features using `build_ensemble.R`. This script firstly removes any linear combinations of metafeatures that may have been produced, and then runs five more classification stack prediction, (nnet, xgboost, ranger, HillClimbing (which is our implementation of the "library of models" approach of Caruana et al), and glmnet
 
 ### Third Level Meta Ensemble.
-This was a final blend of the models using our hand crafted hillclimbing model.
-
-
-### Ensembling
-Second level features are ensembled via hill climbing
+This was a final blend of the models using our hand crafted hillclimbing model, which is contained in the `build_ensemble.R` file
 
