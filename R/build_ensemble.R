@@ -128,12 +128,19 @@ for (ii in 2:length(xlist_val))
 
 rm(xval)
 
+
 ## build ensemble model ####
 
 # prepare the data
 y <- xvalid$QuoteConversion_Flag; xvalid$QuoteConversion_Flag <- NULL
 id_valid <- xvalid$QuoteNumber; xvalid$QuoteNumber <- NULL
 id_full <- xfull$QuoteNumber; xfull$QuoteNumber <- NULL
+
+# produce a plot of possible metafeatures values
+meta_values <- apply(xvalid,2,function(s) auc(y,s))
+# plot(density(meta_values), xlab = "cross-validated AUC score", ylab  = "", main = "Lvl1 metafeatures scores distribution")
+xgb_indices <- grep("xgb", names(meta_values))
+plot(density(meta_values[xgb_indices]), xlab = "cross-validated AUC score: xgb models", ylab  = "", main = "Score distribution for level 1 metafeatures")
 
 
 # folds for cv evaluation
@@ -350,6 +357,21 @@ xfull2 <- data.frame(xfull2)
 xfull2$QuoteNumber <- id_full
 write.csv(xfull2, paste("./input/xfull_lvl2_",todate,"_bag",nbag,".csv", sep = ""), row.names = F)
 xfull2$QuoteNumber <- NULL
+
+# produce a table summarizing level 2 behaviour
+xval <- read_csv("./input/xvalid_lvl2_20160129_bag5.csv")
+xtab <- array(0, c(nfolds, 5))
+for (ii in 1:nfolds)
+{
+  # mix with glmnet: average over multiple alpha parameters 
+  isTrain <- which(xfolds$fold_index != ii)
+  isValid <- which(xfolds$fold_index == ii)
+  x0 <- xval[isTrain,1:5];   x1 <- xval[isValid,1:5]
+  y0 <- xval$QuoteConversion_Flag[isTrain];  y1 <- xval$QuoteConversion_Flag[isValid]
+  xtab[ii,] <-  apply(x1[,1:5],2,function(s) auc(y1,s))
+}
+colnames(xtab) <- c("glmnet", "xgb", "nnet", "hillclimb", "ranger")
+write_csv(data.frame(round(xtab,6)), path = "ensemble_lvl2_results.csv")
 
 ## final ensemble forecasts ####
 # evaluate performance across folds
