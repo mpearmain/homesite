@@ -10,7 +10,7 @@ The general idea is a two-level architecture:
 3. Create a stacked ensemble of the metafeatures
 
 ### System and Dependenices  
-To replicate the full solution will require 16GB RAM min, and depending on the number of cores and machines available will take in excess of 10days to run - (This is due to teh heavy workload of producing meta-level features for 5-fold splits on multiple datasets for multiple models)
+To replicate the full solution will require 16GB RAM min, and depending on the number of cores and machines available will take in excess of 10days to run - (This is due to the heavy workload of producing meta-level features for 5-fold splits on multiple datasets for multiple models)
 
 The code is written as a combination of python (2.7.6) with the following libraries:
   * numpy
@@ -41,7 +41,7 @@ and R (3.2.1) with the following libraries:
 
 
 ## Solution Replication
-To replicate the top NMA (New Model Army) submission all should be run at teh top level dir, it is expected that in `./input` are the train test and sample submission files for the contest. It also expects a `metafeature` folder, and a `submissions` folder.
+To replicate the top NMA (New Model Army) submission all should be run at the top level dir, it is expected that in `./input` are the train test and sample submission files for the contest. It also expects a `metafeature` folder, and a `submissions` folder.
 
 ### Datasets
 Dataset creation was achieved in R by running the `~/R/data_preparation.R` script
